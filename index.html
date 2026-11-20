@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lịch Công Tác Thông Minh - Phòng Thời Sự</title>
+  <title>Lịch Công Tác - Phòng Thời Sự</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,12 +15,6 @@
   
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  
-  <!-- html2canvas để xuất ảnh PNG -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  
-  <!-- lz-string để nén dữ liệu lịch vào URL Hash chia sẻ qua GitHub Pages -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -35,10 +29,12 @@
   </script>
 
   <style>
-    /* Thanh cuộn ngang tinh gọn cho dải tên phóng viên */
+    .custom-scrollbar {
+      overscroll-behavior: contain;
+    }
     .custom-scrollbar::-webkit-scrollbar {
-      height: 5px;
-      width: 5px;
+      height: 6px;
+      width: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
       background: #f1f5f9;
@@ -52,357 +48,351 @@
       background: #94a3b8;
     }
 
-    /* Hiệu ứng nổi nhẹ cho thẻ công tác */
-    .card-hover {
-      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    /* Hiệu ứng nổi bật màu khi đưa chuột hoặc chọn card lịch */
+    .schedule-card {
+      transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    .card-hover:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.08);
+    .schedule-card:hover {
+      transform: translateY(-2px);
+      background-color: #f0f7ff !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 12px 24px -8px rgba(37, 99, 235, 0.18);
     }
-
-    /* Điểm nhấn cho lịch của chính người đang xem */
-    .my-task-highlight {
-      background: linear-gradient(to right, #eff6ff, #ffffff 35%);
+    .schedule-card.is-selected-card {
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 55%, #ffffff 100%) !important;
+      border-color: #1d4ed8 !important;
+      border-left-width: 5px !important;
+      box-shadow: 0 10px 25px -6px rgba(29, 78, 216, 0.22);
+    }
+    .schedule-card.is-person-highlight {
+      background: linear-gradient(to right, #eff6ff, #ffffff 35%) !important;
       border-color: #2563eb !important;
       border-left-width: 4px !important;
     }
-
-    /* Ẩn các nút phụ trợ khi chụp ảnh xuất PNG */
-    .exporting-mode .no-export {
-      display: none !important;
-    }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-blue-900 selection:text-white">
+<body class="bg-slate-100/90 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-blue-700 selection:text-white">
 
   <!-- Toast Notification -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- Top Navigation Header -->
-  <header class="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-white shadow-md sticky top-0 z-30 border-b border-blue-900/50">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center shadow-inner shadow-red-400/30 shrink-0">
-          <i class="fa-solid fa-tower-broadcast text-base text-white"></i>
+  <!-- Top Header -->
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="w-full max-w-[1720px] mx-auto px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center shadow-sm shrink-0">
+          <i class="fa-solid fa-tower-broadcast text-sm text-white"></i>
         </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-800/80 text-blue-200 border border-blue-700/60">Phòng Thời Sự</span>
-            <span class="text-[11px] text-slate-300 hidden sm:inline">Báo & PTTH Đồng Tháp</span>
-          </div>
-          <h1 class="text-sm sm:text-base font-bold tracking-tight text-white mt-0.5">Bảng Điều Hành Lịch Tác Nghiệp</h1>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200">Phòng Thời Sự</span>
+          <span class="text-xs sm:text-sm text-slate-700 font-bold hidden sm:inline">Báo và Phát thanh, Truyền hình Đồng Tháp</span>
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-        <button onclick="toggleInputModal()" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer" title="Dán hoặc chỉnh sửa tin nhắn gốc">
-          <i class="fa-solid fa-pen-to-square text-amber-400"></i>
-          <span>Nhập lịch</span>
+      <div class="flex items-center gap-2">
+        <button onclick="copyStandardScheduleText()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer" title="Sao chép toàn bộ lịch theo mẫu chuẩn">
+          <i class="fa-regular fa-copy"></i>
+          <span>Sao chép lịch</span>
         </button>
-        <button onclick="copyShareableGitHubLink()" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer" title="Tạo đường link GitHub Pages chứa sẵn dữ liệu lịch này để gửi Zalo">
-          <i class="fa-solid fa-link"></i>
-          <span>Copy Link Zalo</span>
-        </button>
-        <button onclick="copyFormattedZalo()" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer" title="Sao chép văn bản lịch đã định dạng đẹp">
-          <i class="fa-regular fa-copy text-emerald-400"></i>
-          <span class="hidden md:inline">Copy Text</span>
-        </button>
-        <button onclick="exportScheduleImage()" id="btn-export-img" class="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer">
-          <i class="fa-solid fa-camera"></i>
-          <span>Xuất ảnh</span>
+        <button onclick="toggleInputModal()" class="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>Nhập / Sửa lịch</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-5 py-5 space-y-4">
+  <!-- Main Full-Width Workspace: Sidebar Left + Schedule Right -->
+  <div class="flex-1 w-full max-w-[1720px] mx-auto px-3 sm:px-6 py-4 sm:py-6 flex flex-col lg:flex-row items-start gap-5">
 
-    <!-- Ngăn kéo Dán Tin Nhắn Thô -->
-    <section id="input-panel" class="hidden bg-white rounded-2xl shadow-md border border-blue-200 overflow-hidden transition-all duration-300">
-      <div class="px-4 py-3 bg-blue-50/70 border-b border-blue-100 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-          </span>
-          <div>
-            <h2 class="text-xs sm:text-sm font-bold text-slate-800">Cập Nhật Dữ Liệu Lịch Công Tác</h2>
-            <p class="text-[11px] text-slate-500">Dán nguyên văn tin nhắn phân công từ lãnh đạo phòng</p>
-          </div>
-        </div>
-        <button type="button" onclick="toggleInputModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200/60 transition cursor-pointer" title="Đóng khung nhập">
-          <i class="fa-solid fa-xmark text-base"></i>
-        </button>
-      </div>
+    <!-- LEFT PANEL: TOÀN BỘ TÁC VỤ & BỘ LỌC -->
+    <aside class="w-full lg:w-[350px] xl:w-[375px] shrink-0 lg:sticky lg:top-[72px] lg:max-h-[calc(100vh-88px)] lg:overflow-y-auto custom-scrollbar space-y-4 pr-0.5">
 
-      <div class="p-4 space-y-3">
-        <textarea id="raw-schedule-input" rows="7" class="w-full rounded-xl border border-slate-300 bg-slate-50 focus:bg-white p-3 text-xs sm:text-sm text-slate-800 font-mono leading-relaxed focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition" placeholder="Dán toàn bộ nội dung tin nhắn phân công lịch vào đây..."></textarea>
-        
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="parseAndRender(true, true)" class="px-3.5 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 shadow-sm transition cursor-pointer">
-              <i class="fa-solid fa-bolt text-amber-400"></i>
-              <span>Hiển thị lịch ngay</span>
-            </button>
-            <button onclick="loadSampleData()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer">
-              <i class="fa-solid fa-flask"></i>
-              <span>Xem dữ liệu mẫu</span>
-            </button>
-            <button onclick="clearInputData()" class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer">
-              <i class="fa-solid fa-trash-can"></i>
-              <span>Xóa trắng</span>
-            </button>
-          </div>
-          <span class="text-[11px] text-slate-400">
-            <i class="fa-brands fa-github mr-1"></i>Sẵn sàng cho GitHub Pages
-          </span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bộ Điều Khiển Trực Quan: Ghim Tên Tôi + Chuyển Chế Độ Xem -->
-    <section id="filter-section" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-3.5 sm:p-4 space-y-3.5">
-      <!-- Hàng 1: Chọn chế độ xem & Tìm nhanh -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
-        <!-- Segmented Control: 3 Chế độ hiển thị -->
-        <div class="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200/80 self-start flex-wrap gap-1">
-          <button id="view-btn-split" onclick="switchViewMode('split')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-white text-blue-900 shadow-sm">
-            <i class="fa-solid fa-table-columns"></i>
-            <span>Tách 2 Lịch (Tin & Chuyên mục)</span>
-          </button>
-          <button id="view-btn-timeline" onclick="switchViewMode('timeline')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-clock"></i>
-            <span>Chung theo giờ</span>
-          </button>
-          <button id="view-btn-matrix" onclick="switchViewMode('matrix')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-users-viewfinder"></i>
-            <span>Theo từng người</span>
-          </button>
-        </div>
-
-        <!-- Ô tìm kiếm tên -->
-        <div class="relative w-full sm:w-56">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-          <input type="text" id="reporter-search" oninput="filterReporterPills()" placeholder="Gõ tên để tìm nhanh..." class="w-full pl-8 pr-7 py-1.5 text-xs sm:text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-slate-50 focus:bg-white transition" />
-          <button id="clear-search-btn" onclick="clearSearchInput()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Hàng 1.5: Bộ lọc nhanh theo 1 trong 2 loại lịch -->
-      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">Hiển thị:</span>
-          <button id="type-filter-all" onclick="setScheduleTypeFilter('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-white transition cursor-pointer">
-            Cả 2 lịch
-          </button>
-          <button id="type-filter-news" onclick="setScheduleTypeFilter('NEWS')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200 transition cursor-pointer flex items-center gap-1.5">
-            <i class="fa-solid fa-tower-broadcast text-[10px]"></i>
-            <span>1. Lịch Thời sự, Họp, Tin</span>
-            <span id="badge-count-news" class="px-1.5 py-0.2 rounded-full bg-rose-200/80 text-rose-950 text-[10px] font-extrabold">0</span>
-          </button>
-          <button id="type-filter-feature" onclick="setScheduleTypeFilter('FEATURE')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 transition cursor-pointer flex items-center gap-1.5">
-            <i class="fa-solid fa-film text-[10px]"></i>
-            <span>2. Lịch Sản Xuất (Chuyên trang, CM)</span>
-            <span id="badge-count-feature" class="px-1.5 py-0.2 rounded-full bg-teal-200/80 text-teal-950 text-[10px] font-extrabold">0</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Hàng 2: Dải chọn nhanh Phóng viên / Quay phim -->
-      <div class="space-y-2">
-        <div class="flex items-center justify-between">
+      <!-- Ngăn Nhập Dữ Liệu Lịch -->
+      <section id="input-panel" class="hidden bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden">
+        <div class="px-4 py-3 bg-blue-50/80 border-b border-blue-100 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Chọn tên của bạn để lọc hoặc đánh dấu:</span>
-            <span id="reporter-count-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 nhân sự</span>
+            <i class="fa-solid fa-paste text-blue-700 text-xs"></i>
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">Dán Tin Nhắn Lịch</h2>
           </div>
-          <!-- Nút chuyển chế độ Chỉ xem mình / Xem cả phòng có đánh dấu mình -->
-          <div id="highlight-mode-toggle" class="hidden items-center gap-1.5 text-[11px]">
-            <button id="btn-only-me" onclick="setHighlightOnly(true)" class="px-2 py-0.5 rounded-md font-bold bg-blue-900 text-white cursor-pointer">Chỉ lịch tôi</button>
-            <button id="btn-highlight-me" onclick="setHighlightOnly(false)" class="px-2 py-0.5 rounded-md font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer">Cả phòng (Tô sáng tôi)</button>
-          </div>
+          <button type="button" onclick="toggleInputModal(false)" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-200/60 transition cursor-pointer" title="Thu gọn">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
         </div>
 
-        <div id="reporter-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-          <!-- Render động bằng JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Khu Vực Hiển Thị Lịch Chính -->
-    <div id="capture-area" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-5">
-      
-      <!-- Header của Bảng Lịch -->
-      <div class="border-b-2 border-slate-900 pb-3.5 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-red-600 mb-1">
-            <span>BÁO VÀ PHÁT THANH, TRUYỀN HÌNH ĐỒNG THÁP</span>
-            <span>•</span>
-            <span>PHÒNG THỜI SỰ</span>
+        <div class="p-3.5 space-y-3">
+          <textarea id="raw-schedule-input" rows="8" class="w-full rounded-xl border border-slate-300 bg-slate-50 focus:bg-white p-3 text-xs text-slate-800 font-mono leading-relaxed focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition custom-scrollbar" placeholder="Dán toàn bộ nội dung tin nhắn phân công lịch vào đây..."></textarea>
+          
+          <div class="flex items-center gap-2">
+            <button onclick="parseAndRender(true, true)" class="flex-1 py-2 px-3 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer">
+              <i class="fa-solid fa-bolt text-amber-300"></i>
+              <span>Cập nhật lên bảng lịch</span>
+            </button>
+            <button onclick="clearInputData()" class="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer" title="Xóa trắng khung nhập">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>Xóa</span>
+            </button>
           </div>
-          <h2 id="schedule-main-title" class="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            LỊCH CÔNG TÁC PHÒNG THỜI SỰ
-          </h2>
-          <div id="active-filter-banner" class="hidden mt-2 inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-900 text-white text-xs font-semibold">
-            <i class="fa-solid fa-user-tag text-amber-300"></i>
-            <span>Đang chọn: <strong id="selected-reporter-label" class="underline decoration-amber-400 underline-offset-2"></strong></span>
-            <button onclick="selectReporter('ALL')" class="ml-1 text-blue-200 hover:text-white no-export cursor-pointer" title="Bỏ chọn">
+        </div>
+      </section>
+
+      <!-- Khối Bộ Lọc & Điều Khiển -->
+      <section id="filter-section" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-4">
+        
+        <!-- 1. Gõ tên hiện lịch ngay -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label for="reporter-search" class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+              Tìm phóng viên / CTV
+            </label>
+            <button id="reset-all-filters-btn" onclick="resetAllFilters()" class="hidden text-[11px] font-bold text-blue-700 hover:underline cursor-pointer">
+              Xem tất cả
+            </button>
+          </div>
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="reporter-search" oninput="handleLiveSearchInput()" placeholder="Gõ tên để hiện lịch ngay..." class="w-full pl-8 pr-8 py-2 text-xs sm:text-sm font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none bg-slate-50 focus:bg-white transition" />
+            <button id="clear-search-btn" onclick="clearSearchInput()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer" title="Xóa tìm kiếm">
               <i class="fa-solid fa-circle-xmark"></i>
             </button>
           </div>
         </div>
 
-        <!-- Thống kê nhanh theo mảng việc -->
-        <div class="flex flex-wrap items-center gap-1.5 text-xs shrink-0">
-          <div class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-semibold text-slate-700 flex items-center gap-1.5">
-            <i class="fa-solid fa-list-check text-blue-700"></i>
-            <span>Tổng: <strong id="stat-total" class="text-slate-900">0</strong> tuyến</span>
+        <!-- 2. Chế độ hiển thị (Có thêm Bảng kẻ ô Bận / Rảnh) -->
+        <div class="space-y-1.5 pt-3 border-t border-slate-100">
+          <span class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Cách sắp xếp lịch</span>
+          <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200/80">
+            <button id="view-btn-split" onclick="switchViewMode('split')" class="py-1.5 px-2 rounded-lg text-[11px] font-bold transition cursor-pointer text-center bg-white text-blue-800 shadow-xs flex items-center justify-center gap-1">
+              <i class="fa-solid fa-layer-group text-[10px]"></i>
+              <span>Theo nhóm</span>
+            </button>
+            <button id="view-btn-timeline" onclick="switchViewMode('timeline')" class="py-1.5 px-2 rounded-lg text-[11px] font-semibold transition cursor-pointer text-center text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+              <i class="fa-regular fa-clock text-[10px]"></i>
+              <span>Theo giờ</span>
+            </button>
+            <button id="view-btn-matrix" onclick="switchViewMode('matrix')" class="py-1.5 px-2 rounded-lg text-[11px] font-semibold transition cursor-pointer text-center text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+              <i class="fa-solid fa-user-check text-[10px]"></i>
+              <span>Theo người</span>
+            </button>
+            <button id="view-btn-grid" onclick="switchViewMode('grid')" class="py-1.5 px-2 rounded-lg text-[11px] font-semibold transition cursor-pointer text-center text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+              <i class="fa-solid fa-table-cells text-[10px]"></i>
+              <span>Bảng kẻ ô</span>
+            </button>
           </div>
-          <div id="stat-conflict-box" class="hidden px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 font-semibold text-amber-800 flex items-center gap-1.5">
-            <i class="fa-solid fa-bolt text-amber-600"></i>
-            <span>Chạy sô: <strong id="stat-conflicts">0</strong> người</span>
+        </div>
+
+        <!-- 3. Phân loại lịch -->
+        <div class="space-y-1.5 pt-3 border-t border-slate-100">
+          <span class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Loại lịch</span>
+          <div class="flex flex-col gap-1.5">
+            <button id="type-filter-all" onclick="setScheduleTypeFilter('ALL')" class="w-full px-3 py-2 rounded-xl text-xs font-bold bg-blue-800 text-white transition cursor-pointer flex items-center justify-between">
+              <span>Tất cả lịch trong ngày</span>
+              <span id="badge-count-all" class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-extrabold">0</span>
+            </button>
+            <button id="type-filter-news" onclick="setScheduleTypeFilter('NEWS')" class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50/80 text-rose-900 hover:bg-rose-100 border border-rose-200/80 transition cursor-pointer flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-tower-broadcast text-rose-600 text-[11px]"></i>
+                <span>Thời sự, Họp, Tin & Sự kiện</span>
+              </span>
+              <span id="badge-count-news" class="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-950 text-[10px] font-extrabold">0</span>
+            </button>
+            <button id="type-filter-feature" onclick="setScheduleTypeFilter('FEATURE')" class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-teal-50/80 text-teal-900 hover:bg-teal-100 border border-teal-200/80 transition cursor-pointer flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-film text-teal-600 text-[11px]"></i>
+                <span>Lịch Sản Xuất</span>
+              </span>
+              <span id="badge-count-feature" class="px-2 py-0.5 rounded-full bg-teal-200/80 text-teal-950 text-[10px] font-extrabold">0</span>
+            </button>
           </div>
         </div>
-      </div>
 
-      <!-- Ghi chú quy định chung nhỏ gọn -->
-      <div id="global-rules-box" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/90 text-xs text-slate-600">
-        <div class="flex items-center gap-2">
-          <i class="fa-regular fa-clock text-amber-600 shrink-0"></i>
-          <span id="rule-early-text" class="font-medium">Phóng viên đến trước 15 phút so với giờ hội nghị.</span>
+        <!-- 4. Danh sách nhân sự hiện đại (Không kẹt cuộn trang) -->
+        <div class="space-y-2.5 pt-3 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Danh sách nhân sự</span>
+            <span id="reporter-count-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200/70">0 người</span>
+          </div>
+
+          <!-- Tùy chọn hiển thị khi đã chọn 1 người -->
+          <div id="highlight-mode-toggle" class="hidden grid-cols-2 gap-1 p-1 rounded-lg bg-blue-50 border border-blue-200 text-[11px]">
+            <button id="btn-only-me" onclick="setHighlightOnly(true)" class="py-1 px-2 rounded-md font-bold bg-blue-700 text-white cursor-pointer text-center">Chỉ lịch người này</button>
+            <button id="btn-highlight-me" onclick="setHighlightOnly(false)" class="py-1 px-2 rounded-md font-semibold text-blue-900 hover:bg-blue-100 cursor-pointer text-center">Cả phòng (Tô sáng)</button>
+          </div>
+
+          <!-- Khung cuộn nhân sự độc lập -->
+          <div id="reporter-pills" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1.5 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
+            <!-- Render động bằng JS -->
+          </div>
         </div>
-        <span class="hidden sm:inline text-slate-300">|</span>
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-building-shield text-blue-700 shrink-0"></i>
-          <span id="rule-standby-text" class="font-medium">Không có lịch công tác thì trực đột xuất tại trụ sở cơ quan.</span>
+      </section>
+
+    </aside>
+
+    <!-- RIGHT PANEL: KHU VỰC HIỂN THỊ LỊCH CHÍNH -->
+    <main class="flex-1 w-full min-w-0">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 lg:p-7 space-y-5">
+        
+        <!-- Header Bảng Lịch -->
+        <div class="border-b-2 border-blue-900/15 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-blue-700 mb-1">
+              <span>BÁO VÀ PHÁT THANH, TRUYỀN HÌNH ĐỒNG THÁP</span>
+              <span>•</span>
+              <span>PHÒNG THỜI SỰ</span>
+            </div>
+            <h2 id="schedule-main-title" class="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              LỊCH CÔNG TÁC PHÒNG THỜI SỰ
+            </h2>
+            <div id="active-filter-banner" class="hidden mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-700 text-white text-xs font-semibold">
+              <i class="fa-solid fa-filter text-amber-300 text-[11px]"></i>
+              <span id="selected-reporter-label"></span>
+              <button onclick="resetAllFilters()" class="ml-1 text-blue-200 hover:text-white cursor-pointer" title="Xóa bộ lọc">
+                <i class="fa-solid fa-circle-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Thống kê nhanh -->
+          <div class="flex flex-wrap items-center gap-2 text-xs shrink-0">
+            <div class="px-3 py-1.5 rounded-xl bg-blue-50/80 border border-blue-200/80 font-semibold text-blue-950 flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-days text-blue-700"></i>
+              <span>Hiển thị: <strong id="stat-total" class="text-blue-900">0</strong> lịch</span>
+            </div>
+            <div id="stat-conflict-box" class="hidden px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 font-semibold text-amber-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-amber-600"></i>
+              <span>Từ 2 lịch/ngày: <strong id="stat-conflicts">0</strong> người</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tóm tắt lịch cá nhân khi lọc theo người -->
+        <div id="personal-status-summary" class="hidden rounded-xl border p-3.5 bg-blue-50/80 border-blue-200"></div>
+
+        <!-- Danh sách Lịch -->
+        <div id="schedule-sections" class="space-y-6"></div>
+
+        <!-- Khối TTTS nằm riêng dưới cùng, không thuộc mục nào -->
+        <div id="ttts-bottom-section" class="hidden"></div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+          <span>Phòng Thời Sự • Báo và Phát thanh, Truyền hình Đồng Tháp</span>
+          <span id="generated-timestamp"></span>
         </div>
       </div>
+    </main>
 
-      <!-- Thẻ tóm tắt lịch cá nhân (Khi chọn tên cụ thể) -->
-      <div id="personal-status-summary" class="hidden rounded-xl border p-3.5 bg-blue-50/70 border-blue-200">
-        <!-- Nội dung render động -->
-      </div>
-
-      <!-- Khu vực hiển thị chính theo Chế độ xem (Timeline / Theo người / Theo mảng) -->
-      <div id="schedule-sections" class="space-y-6">
-        <!-- Render động -->
-      </div>
-
-      <!-- Footer nhỏ -->
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-        <span>Phòng Thời Sự • Báo & PTTH Đồng Tháp</span>
-        <span id="generated-timestamp"></span>
-      </div>
-    </div>
-
-  </main>
+  </div>
 
   <script>
     // =========================================================================
-    // CẤU HÌNH LƯU TRỮ, DỮ LIỆU MẪU VÀ BIẾN TRẠNG THÁI TOÀN CỤC
+    // CẤU HÌNH LƯU TRỮ & BIẾN TRẠNG THÁI (ĐÃ XÓA TOÀN BỘ DỮ LIỆU MẪU)
     // =========================================================================
     const STORAGE_KEYS = {
-      RAW_TEXT: 'thoisu_schedule_raw_text_v2',
-      SELECTED_REPORTER: 'thoisu_schedule_selected_reporter_v2',
-      VIEW_MODE: 'thoisu_schedule_view_mode_v2',
-      HIGHLIGHT_ONLY: 'thoisu_schedule_highlight_only_v2'
+      RAW_TEXT: 'thoisu_schedule_raw_text_v6',
+      SELECTED_REPORTER: 'thoisu_schedule_selected_reporter_v6',
+      VIEW_MODE: 'thoisu_schedule_view_mode_v6',
+      HIGHLIGHT_ONLY: 'thoisu_schedule_highlight_only_v6'
     };
 
-    const SAMPLE_RAW_TEXT = `LỊCH CÔNG TÁC THỨ BA, 17/11:
-- 8h45: Ông Thắng, ông Tuấn tiếp đoàn công tác TW dự Ngày ĐĐK (Ấp Vĩnh Bình, xã Lấp Vò): PHAN KHÁNH – THÚY MỸ– LÊ SANG
-- 08h: Ông Thiện Làm việc với Sở Khoa học và Công nghệ về tình hình thực hiện nhiệm vụ và phương hướng công tác thời gian tới (Phòng họp Sở Khoa học và Công nghệ): SỬU MINH – HIẾU – BÁ THỦY
-- 14h: Họp Thành viên Ủy ban nhân dân tỉnh (Phòng họp số 3 – Trung tâm Hội nghị): VĂN THẢO – PHƯỚC LỘC – BÁ THỦY
-- 14h: Ông Thiện Khảo sát thực tế các vùng sản xuất hoa, kiểng trên địa bàn tỉnh và làm việc với Tập đoàn Sun-group về chương trình hợp tác (Phường Sa Đéc): MỸ NHÂN – CTV (TH)
-- 9h: Họp trao đổi thông tin, kinh nghiệm ứng dụng công nghệ bay không người lái (Drone/UAV) và Trí tuệ nhân tạo (AI) phục vụ phát triển kinh tế tầm thấp (ĐHTG): HỮU THÔNG – MẠNH CƯỜNG – VIỆT BÌNH
-- 19h: Trao giải Cuộc thi “Tiếng hát đại đoàn kết” tỉnh Đồng Tháp năm 2026 (Rạp hát thầy 5 Tú): THU HOÀI – TUYẾT MINH – ĐOÀN VŨ
-- 14h30 xe xuất phát tại trụ sở ĐT: Tổng duyệt chương trình Lễ phát động hưởng ứng Tuần Văn hóa đại đoàn kết dân tộc và Khai mạc Lễ hội Văn hóa – Du lịch lần thứ VII năm 2026 (Sân lễ Nhà văn hóa ấp An Lợi, xã Cái Bè): SỬU MINH - N. DUYÊN - LÊ THI
-- 13h: CĐNTNN Bình Ninh: TUYẾN – BÙI PHONG
-- 7h: Trang địa phương Tân Phước 2 + Flycam: N.GIANG - NGUYỄN PHONG
-- 6h20: NTM Tân Thới: N. DUYÊN - LÊ THI
-- 4h00: PS lúa giống, Xã Gò Dầu, Tây Ninh: QUÂN - NAM
-- 5h50: GSHH: THẢO - HOÀNG
-- 7h30: CM Điện: KHƯƠNG- NGUYÊN
-- 6h: CM Dân vận + CFDN huyện T10 cũ: D.KHÁNH - THANH ĐỊNH
-- Đi với công ty điện lực đồng tháp thực hiện chuyên trang của địa phương ạ: MỸ LÝ
-- 12h30: Công tác phường Sa Đéc - tin PCT khảo sát vùng trồng hoa kiểng: MỸ NHÂN
-- 8h thực hiện Chuyên trang xây dựng nông thôn mới Báo in tại xã Lai Vung: DƯƠNG ÚT
-- 8h thực hiện trang giảm nghèo xã Chợ Gạo, Bình Ninh: PHƯƠNG MAI
-- TTTS: PHÚ NGHĨA(CĐ) - XUÂN HOÀNG
-- PHÓNG VIÊN ĐẾN TRƯỚC 15 PHÚT SO VỚI GIỜ HỘI NGHỊ
-- ANH, CHỊ, EM KHÔNG CÓ LỊCH CÔNG TÁC THÌ TRỰC ĐỘT XUẤT TẠI TRỤ SỞ CƠ QUAN`;
-
     let selectedReporter = 'ALL';
+    let selectedCardId = null;
+    let liveSearchQuery = '';
     let isInputOpen = false;
     let viewMode = 'split';
     let scheduleTypeFilter = 'ALL';
     let filterOnlyMe = true;
+
     let parsedState = {
       title: 'LỊCH CÔNG TÁC PHÒNG THỜI SỰ',
       items: [],
       dutyItem: null,
       reporters: [],
+      taskCounts: {},
       conflicts: {},
-      earlyRule: 'Phóng viên đến trước 15 phút so với giờ hội nghị.',
-      standbyRule: 'Không có lịch công tác thì trực đột xuất tại trụ sở cơ quan.'
+      earlyRule: 'PHÓNG VIÊN ĐẾN TRƯỚC 15 PHÚT SO VỚI GIỜ HỘI NGHỊ',
+      standbyRule: 'ANH, CHỊ, EM KHÔNG CÓ LỊCH CÔNG TÁC THÌ TRỰC ĐỘT XUẤT TẠI TRỤ SỞ CƠ QUAN'
     };
 
     // =========================================================================
-    // PHÂN LOẠI TÍNH CHẤT CÔNG VIỆC TỰ ĐỘNG:
-    // 1. NEWS: Lịch Thời sự, Họp, Tin lãnh đạo, Sự kiện
-    // 2. FEATURE: Lịch Sản Xuất (Chuyên trang, Chuyên mục, Công tác phường xã, TTXS, GN, CĐ...)
+    // PHÂN LOẠI NGHIỆP VỤ:
+    // - LỊCH SẢN XUẤT: CCGT, NCNA, Ghi hình, Tiếp phóng sự, Tiếp CM,
+    //   liên hệ nội dung phỏng vấn, Thu PB, Phỏng vấn, PS, CM, NTM, CĐNTNN,
+    //   GSHH, CFDN, GN, TTXS, chuyên trang, chuyên mục, từ viết tắt dày đặc...
+    // - LỊCH THỜI SỰ, HỌP, TIN & SỰ KIỆN: Hội nghị, lãnh đạo, sự kiện thời sự
     // =========================================================================
     function classifyTaskCategory(content) {
       const lower = content.toLowerCase();
-      const isFeatureTask =
-        /^(ps|cm|ntm|cđntnn|gshh|cfdn|cđ|gn|ttxs)\b/i.test(lower) ||
-        /\b(chuyên trang|chuyên mục|chuyên đề|trang địa phương|trang giảm nghèo|phóng sự|báo in|công tác\s+(phường|xã)|ttxs|ghi nhận|cải cách\s+(hc|hành chính)|điện lực đồng tháp thực hiện)\b/i.test(lower);
 
-      if (isFeatureTask) {
+      const productionRegex =
+        /^(ps|cm|ntm|cđntnn|gshh|cfdn|cđ|gn|ttxs|ccgt|ncna)\b/i.test(lower) ||
+        /\b(ccgt|ncna|ghi\s+hình|tiếp\s+phóng\s+sự|tiếp\s+ps|tiếp\s+cm|tiếp\s+chuyên\s+mục|liên\s+hệ\s+nội\s+dung\s+phỏng\s+vấn|liên\s+hệ\s+phỏng\s+vấn|thu\s+pb|thu\s+phát\s+biểu|phỏng\s+vấn|chuyên\s+trang|chuyên\s+mục|chuyên\s+đề|trang\s+địa\s+phương|trang\s+giảm\s+nghèo|phóng\s+sự|báo\s+in|công\s+tác\s+(phường|xã)|ttxs|ghi\s+nhận|cải\s+cách\s+(hc|hành\s+chính)|thực\s+hiện\s+chuyên\s+trang|thực\s+hiện\s+trang)\b/i.test(lower);
+
+      if (productionRegex) {
         return {
           group: 'FEATURE',
           key: 'feature',
-          label: 'Lịch Sản Xuất / Chuyên mục',
+          label: 'Lịch Sản Xuất',
           icon: 'fa-film',
           pillClass: 'bg-teal-50 text-teal-800 border-teal-200'
         };
       }
 
-      const isLeaderMeeting = /^(ông|bà)\s+|họp|tiếp đoàn|làm việc|khảo sát|ubnd|hđnd|tỉnh ủy|thành viên/i.test(lower);
+      // Kiểm tra mật độ từ viết tắt IN HOA ngắn (nếu có nhiều cụm viết tắt chuyên môn mà không phải hội nghị/lãnh đạo)
+      const isNewsOrMeeting = /hội\s+nghị|họp|tiếp\s+đoàn|làm\s+việc|khảo\s+sát|ubnd|hđnd|tỉnh\s+ủy|trao\s+giải|lễ\s+hội|tổng\s+duyệt|truyền\s+thông|^(ông|bà)\s+/i.test(lower);
+      if (!isNewsOrMeeting) {
+        const upperAcronyms = content.match(/\b[A-ZĐÂĂÊÔƠƯ]{2,8}\b/g) || [];
+        if (upperAcronyms.length >= 2) {
+          return {
+            group: 'FEATURE',
+            key: 'feature',
+            label: 'Lịch Sản Xuất',
+            icon: 'fa-film',
+            pillClass: 'bg-teal-50 text-teal-800 border-teal-200'
+          };
+        }
+      }
+
+      const isLeaderMeeting = /^(ông|bà)\s+|họp|tiếp\s+đoàn|làm\s+việc|khảo\s+sát|ubnd|hđnd|tỉnh\s+ủy|thành\s+viên|hội\s+nghị/i.test(lower);
       return {
         group: 'NEWS',
         key: isLeaderMeeting ? 'leader' : 'event',
-        label: isLeaderMeeting ? 'Tin Lãnh đạo / Hội nghị' : 'Tin Sự kiện / Thời sự',
-        icon: isLeaderMeeting ? 'fa-landmark' : 'fa-tower-broadcast',
+        label: isLeaderMeeting ? 'Công tác / Hội nghị' : 'Sự kiện / Thời sự',
+        icon: isLeaderMeeting ? 'fa-landmark' : 'fa-calendar-day',
         pillClass: isLeaderMeeting
           ? 'bg-rose-50 text-rose-700 border-rose-200'
           : 'bg-blue-50 text-blue-700 border-blue-200'
       };
     }
 
-    function getPersonInitials(name) {
-      const clean = name.replace(/\([^)]*\)/g, '').trim();
-      const parts = clean.split(/[\s.]+/).filter(Boolean);
-      if (parts.length === 0) return '?';
-      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-
-    function toggleInputModal(forceState) {
-      const panel = document.getElementById('input-panel');
-      if (typeof forceState === 'boolean') {
-        isInputOpen = forceState;
-      } else {
-        isInputOpen = !isInputOpen;
+    function normalizePersonToken(rawToken) {
+      const trimmed = rawToken.trim();
+      if (/^CTV\b/i.test(trimmed)) {
+        const subNote = trimmed.match(/^CTV\s*\(([^)]+)\)$/i);
+        return {
+          canonicalName: trimmed.toUpperCase(),
+          displayName: subNote ? `CTV (${subNote[1].toUpperCase()})` : 'CTV',
+          isCTV: true,
+          noteTag: 'Cộng tác viên'
+        };
       }
 
-      if (isInputOpen) {
-        panel.classList.remove('hidden');
-      } else {
-        panel.classList.add('hidden');
+      const noteMatch = trimmed.match(/^([^(]+?)\s*\(([^)]+)\)\s*$/);
+      if (noteMatch) {
+        return {
+          canonicalName: trimmed,
+          displayName: noteMatch[1].trim(),
+          isCTV: false,
+          noteTag: noteMatch[2].trim()
+        };
       }
+
+      return {
+        canonicalName: trimmed,
+        displayName: trimmed,
+        isCTV: false,
+        noteTag: ''
+      };
     }
 
     function splitCrewNames(crewText) {
@@ -412,24 +402,76 @@
         .filter(Boolean);
     }
 
+    // =========================================================================
+    // BÓC TÁCH ĐA ĐỊA ĐIỂM / NHIỀU XÃ, PHƯỜNG, ĐỊA PHƯƠNG
+    // =========================================================================
     function extractLocationFromText(text) {
-      const parenMatch = text.match(/\(([^()]+)\)\s*$/);
-      if (parenMatch) {
+      // 1. Ưu tiên sau cụm giới từ chỉ địa điểm: "tại ...", "ở ...", "trên địa bàn ..."
+      const prepMatch = text.match(/\s+(?:tại|ở|trên\s+địa\s+bàn)\s+(.+)$/i);
+      if (prepMatch) {
         return {
-          cleanContent: text.slice(0, parenMatch.index).trim(),
-          location: parenMatch[1].trim()
+          cleanContent: text.slice(0, prepMatch.index).trim(),
+          location: prepMatch[1].trim()
         };
       }
 
-      const atMatch = text.match(/(?:,\s*|\s+tại\s+)((?:xã|phường|thị trấn|ấp|huyện|thành phố|tp\.?|tỉnh|sân lễ|nhà văn hóa|phòng họp|trung tâm|sở)[^:]+)$/i);
-      if (atMatch) {
+      // 2. Cụm địa điểm nằm trong ngoặc đơn (...) ở cuối câu
+      const trailingParenMatch = text.match(/\(([^()]+)\)\s*$/);
+      if (trailingParenMatch) {
         return {
-          cleanContent: text.slice(0, atMatch.index).trim(),
-          location: atMatch[1].trim()
+          cleanContent: text.slice(0, trailingParenMatch.index).trim(),
+          location: trailingParenMatch[1].trim()
+        };
+      }
+
+      // 3. Nhiều địa phương nối tiếp nhau ở cuối câu (vd: "... xã Chợ Gạo, Bình Ninh" hoặc "... phường Sa Đéc, xã Tân Dương")
+      const multiAdminMatch = text.match(/(?:,\s*|\s+)((?:xã|phường|thị\s+trấn|ấp|huyện|thành\s+phố|tp\.?|tỉnh|sân\s+lễ|nhà\s+văn\s+hóa|phòng\s+họp|trung\s+tâm|sở|trụ\s+sở|ht\s+|hội\s+trường)[^:]+)$/i);
+      if (multiAdminMatch) {
+        return {
+          cleanContent: text.slice(0, multiAdminMatch.index).trim(),
+          location: multiAdminMatch[1].trim()
         };
       }
 
       return { cleanContent: text, location: '' };
+    }
+
+    function isLikelyCrewList(candidate) {
+      if (!candidate || candidate.length === 0) return false;
+      if (/^\d/.test(candidate)) return false;
+      if (/\b(họp|làm việc|tiếp đoàn|khảo sát|chuyên trang|chuyên mục|xã|phường|tỉnh|sở|ubnd|giờ)\b/i.test(candidate)) {
+        return false;
+      }
+      const tokens = splitCrewNames(candidate);
+      if (tokens.length === 0) return false;
+      return tokens.every(t => {
+        const clean = t.replace(/\([^)]*\)/g, '').trim();
+        const words = clean.split(/\s+/).filter(Boolean);
+        return words.length >= 1 && words.length <= 4 && clean === clean.toUpperCase();
+      });
+    }
+
+    // =========================================================================
+    // NHẬN DIỆN GIỜ THÔNG MINH: 6h30, 6 giờ 30, 6h30:, 6:30:, 08h, 14 giờ...
+    // =========================================================================
+    function parseFlexibleTimeToken(hourStr, minStr) {
+      const hour = parseInt(hourStr, 10);
+      const minute = minStr ? parseInt(minStr, 10) : 0;
+      if (isNaN(hour) || hour < 0 || hour > 23 || isNaN(minute) || minute < 0 || minute > 59) {
+        return null;
+      }
+      let shift = 'anytime';
+      if (hour < 12) shift = 'morning';
+      else if (hour < 18) shift = 'afternoon';
+      else shift = 'evening';
+
+      return {
+        hour,
+        minute,
+        displayTime: `${String(hour).padStart(2, '0')}h${String(minute).padStart(2, '0')}`,
+        sortMinutes: hour * 60 + minute,
+        shift
+      };
     }
 
     function parseScheduleText(rawText) {
@@ -439,13 +481,14 @@
         .filter(Boolean);
 
       let title = 'LỊCH CÔNG TÁC PHÒNG THỜI SỰ';
-      let earlyRule = 'Phóng viên đến trước 15 phút so với giờ hội nghị.';
-      let standbyRule = 'Không có lịch công tác thì trực đột xuất tại trụ sở cơ quan.';
+      let earlyRule = 'PHÓNG VIÊN ĐẾN TRƯỚC 15 PHÚT SO VỚI GIỜ HỘI NGHỊ';
+      let standbyRule = 'ANH, CHỊ, EM KHÔNG CÓ LỊCH CÔNG TÁC THÌ TRỰC ĐỘT XUẤT TẠI TRỤ SỞ CƠ QUAN';
       let dutyItem = null;
       const items = [];
 
       const mergedLines = [];
       for (const line of lines) {
+        if (/^[-–—=]{4,}$/.test(line)) continue;
         if (/^(LỊCH\s+CÔNG\s+TÁC|CHƯƠNG\s+TRÌNH\s+CÔNG\s+TÁC)/i.test(line)) {
           title = line.replace(/:$/, '').trim().toUpperCase();
           continue;
@@ -459,7 +502,12 @@
           continue;
         }
 
-        const isNewEntry = /^[-–—•*]/.test(line) || /^\d{1,2}\s*[hH:]/.test(line) || /^TTTS\s*:/i.test(line);
+        const isNewEntry =
+          /^[-–—•*]/.test(line) ||
+          /^\d{1,2}\s*(?:giờ|h|:)/i.test(line) ||
+          /^TTTS\s*:/i.test(line) ||
+          /:\s*\d{1,2}\s*(?:giờ|h|:)\s*\d{0,2}/i.test(line);
+
         if (isNewEntry || mergedLines.length === 0) {
           mergedLines.push(line.replace(/^[-–—•*]+\s*/, '').trim());
         } else {
@@ -468,47 +516,60 @@
       }
 
       mergedLines.forEach((entry, idx) => {
-        const tttsMatch = entry.match(/^(TTTS|TRỰC\s*TTTS)\s*:\s*(.+)$/i);
+        // Nhận diện ca trực TTTS
+        const tttsMatch = entry.match(/^(TTTS|TRỰC\s*TTTS)\s*:\s*(.*)$/i);
         if (tttsMatch) {
           dutyItem = {
             label: 'Trực Trung tâm Tin tức / Biên tập (TTTS)',
-            crew: splitCrewNames(tttsMatch[2])
+            crew: tttsMatch[2].trim() ? splitCrewNames(tttsMatch[2]) : []
           };
           return;
         }
 
+        // 1. Tách danh sách tên người ở cuối dòng sau dấu ":" cuối cùng
         let bodyPart = entry;
         let crew = [];
         const lastColonIdx = entry.lastIndexOf(':');
         if (lastColonIdx !== -1) {
           const possibleCrew = entry.slice(lastColonIdx + 1).trim();
-          if (possibleCrew.length > 0 && possibleCrew === possibleCrew.toUpperCase() && !/^\d/.test(possibleCrew)) {
+          if (isLikelyCrewList(possibleCrew)) {
             crew = splitCrewNames(possibleCrew);
             bodyPart = entry.slice(0, lastColonIdx).trim();
           }
         }
 
+        // 2. Nhận diện thời gian thông minh (6h30, 6 giờ 30, 6h30:, 6:30:, 08h, 14 giờ...)
         let displayTime = 'Trong ngày';
         let sortMinutes = 23 * 60 + 59;
         let shift = 'anytime';
         let departureNote = '';
         let contentRaw = bodyPart;
 
-        const timeMatch = bodyPart.match(/^(\d{1,2})\s*[hH:]\s*(\d{0,2})(?:\s*(xe\s+xuất\s+phát[^:]*))?\s*(?::|\s)\s*(.+)$/i);
-        if (timeMatch) {
-          const hour = parseInt(timeMatch[1], 10);
-          const minute = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
-          displayTime = `${String(hour).padStart(2, '0')}h${String(minute).padStart(2, '0')}`;
-          sortMinutes = hour * 60 + minute;
+        // Mẫu A: Giờ ở đầu câu (vd: "6h30: ...", "6 giờ 30 ...", "6:30: ...", "14h30 xe xuất phát tại trụ sở ĐT: ...")
+        const startTimeRegex = /^(\d{1,2})\s*(?:giờ|h|:)\s*(\d{1,2})?(?:\s*phút)?(?:\s*(xe\s+xuất\s+phát[^:]*))?\s*(?::|\s)\s*(.+)$/i;
+        // Mẫu B: Giờ đặt ở cuối vế nội dung (vd: "LHHKHKT tổ chức Hội nghị... tại HT Đảng ủy Bình Hàng Trung (ấp 1B): 9h30")
+        const endTimeRegex = /^(.+?)\s*(?::|\blúc\b)\s*(\d{1,2})\s*(?:giờ|h|:)\s*(\d{1,2})?(?:\s*phút)?\s*$/i;
 
-          if (hour < 12) shift = 'morning';
-          else if (hour < 18) shift = 'afternoon';
-          else shift = 'evening';
+        const startMatch = bodyPart.match(startTimeRegex);
+        const endMatch = !startMatch ? bodyPart.match(endTimeRegex) : null;
 
-          if (timeMatch[3]) {
-            departureNote = timeMatch[3].trim();
+        if (startMatch) {
+          const parsedTime = parseFlexibleTimeToken(startMatch[1], startMatch[2]);
+          if (parsedTime) {
+            displayTime = parsedTime.displayTime;
+            sortMinutes = parsedTime.sortMinutes;
+            shift = parsedTime.shift;
+            if (startMatch[3]) departureNote = startMatch[3].trim();
+            contentRaw = startMatch[4].trim();
           }
-          contentRaw = timeMatch[4].trim();
+        } else if (endMatch) {
+          const parsedTime = parseFlexibleTimeToken(endMatch[2], endMatch[3]);
+          if (parsedTime) {
+            contentRaw = endMatch[1].trim();
+            displayTime = parsedTime.displayTime;
+            sortMinutes = parsedTime.sortMinutes;
+            shift = parsedTime.shift;
+          }
         }
 
         const { cleanContent, location } = extractLocationFromText(contentRaw);
@@ -529,21 +590,22 @@
 
       items.sort((a, b) => a.sortMinutes - b.sortMinutes);
 
-      const taskCountMap = {};
+      // Thống kê số lượng lịch trong ngày của từng nhân sự
+      const taskCounts = {};
       items.forEach(it => {
         it.crew.forEach(person => {
-          taskCountMap[person] = (taskCountMap[person] || 0) + 1;
+          taskCounts[person] = (taskCounts[person] || 0) + 1;
         });
       });
       if (dutyItem) {
         dutyItem.crew.forEach(person => {
-          if (!(person in taskCountMap)) taskCountMap[person] = 0;
+          if (!(person in taskCounts)) taskCounts[person] = 0;
         });
       }
 
-      const reporters = Object.keys(taskCountMap).sort((a, b) => a.localeCompare(b, 'vi'));
+      const reporters = Object.keys(taskCounts).sort((a, b) => a.localeCompare(b, 'vi'));
       const conflicts = {};
-      Object.entries(taskCountMap).forEach(([person, count]) => {
+      Object.entries(taskCounts).forEach(([person, count]) => {
         if (count >= 2) conflicts[person] = count;
       });
 
@@ -552,6 +614,7 @@
         items,
         dutyItem,
         reporters,
+        taskCounts,
         conflicts,
         earlyRule,
         standbyRule
@@ -559,8 +622,80 @@
     }
 
     // =========================================================================
-    // ĐIỀU KHIỂN CHẾ ĐỘ XEM & LỌC PHÓNG VIÊN
+    // SAO CHÉP TOÀN BỘ LỊCH THEO MẪU CHUẨN
     // =========================================================================
+    function copyStandardScheduleText() {
+      if (!parsedState.items || parsedState.items.length === 0) {
+        showToast('Chưa có dữ liệu lịch để sao chép!', 'error');
+        return;
+      }
+
+      const sortedItems = [...parsedState.items].sort((a, b) => a.sortMinutes - b.sortMinutes);
+      const lines = [];
+
+      lines.push(`${parsedState.title}:`);
+
+      sortedItems.forEach(it => {
+        const timePrefix = it.departureNote
+          ? `${it.displayTime} (${it.departureNote})`
+          : it.displayTime;
+        const locPart = it.location ? ` (${it.location})` : '';
+        const crewPart = it.crew.length > 0 ? `: ${it.crew.join(' – ')}` : '';
+        lines.push(`- ${timePrefix}: ${it.content}${locPart}${crewPart}`);
+      });
+
+      const dutyCrewStr = parsedState.dutyItem && parsedState.dutyItem.crew.length > 0
+        ? ` ${parsedState.dutyItem.crew.join(' – ')}`
+        : '';
+      lines.push(`- TTTS:${dutyCrewStr}`);
+      lines.push('-----------');
+      lines.push(`- ${parsedState.earlyRule}`);
+      lines.push('');
+      lines.push(`- ${parsedState.standbyRule}`);
+
+      const outputText = lines.join('\n');
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(outputText)
+          .then(() => showToast('Đã sao chép toàn bộ lịch theo mẫu chuẩn!', 'success'))
+          .catch(() => fallbackCopyText(outputText));
+      } else {
+        fallbackCopyText(outputText);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('Đã sao chép toàn bộ lịch theo mẫu chuẩn!', 'success');
+      } catch (e) {
+        showToast('Không thể tự động sao chép, vui lòng thử lại.', 'error');
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+
+    // =========================================================================
+    // ĐIỀU KHIỂN BỘ LỌC & CHỌN CARD NỔI BẬT
+    // =========================================================================
+    function toggleInputModal(forceState) {
+      const panel = document.getElementById('input-panel');
+      isInputOpen = typeof forceState === 'boolean' ? forceState : !isInputOpen;
+      if (isInputOpen) panel.classList.remove('hidden');
+      else panel.classList.add('hidden');
+    }
+
+    function toggleSelectCard(cardId) {
+      selectedCardId = (selectedCardId === cardId) ? null : cardId;
+      renderScheduleBoard();
+    }
+
     function switchViewMode(mode) {
       viewMode = mode;
       localStorage.setItem(STORAGE_KEYS.VIEW_MODE, mode);
@@ -569,14 +704,14 @@
     }
 
     function updateViewModeButtons() {
-      const modes = ['split', 'timeline', 'matrix'];
+      const modes = ['split', 'timeline', 'matrix', 'grid'];
       modes.forEach(m => {
         const btn = document.getElementById(`view-btn-${m}`);
         if (!btn) return;
         if (m === viewMode) {
-          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-white text-blue-900 shadow-sm';
+          btn.className = 'py-1.5 px-2 rounded-lg text-[11px] font-bold transition cursor-pointer text-center bg-white text-blue-800 shadow-xs flex items-center justify-center gap-1';
         } else {
-          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+          btn.className = 'py-1.5 px-2 rounded-lg text-[11px] font-semibold transition cursor-pointer text-center text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1';
         }
       });
     }
@@ -594,16 +729,16 @@
       if (!btnAll || !btnNews || !btnFeature) return;
 
       btnAll.className = scheduleTypeFilter === 'ALL'
-        ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-900 text-white transition cursor-pointer'
-        : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer';
+        ? 'w-full px-3 py-2 rounded-xl text-xs font-bold bg-blue-800 text-white transition cursor-pointer flex items-center justify-between shadow-xs'
+        : 'w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer flex items-center justify-between';
 
       btnNews.className = scheduleTypeFilter === 'NEWS'
-        ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-700 text-white border border-rose-700 transition cursor-pointer flex items-center gap-1.5 shadow-sm'
-        : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200 transition cursor-pointer flex items-center gap-1.5';
+        ? 'w-full px-3 py-2 rounded-xl text-xs font-bold bg-rose-700 text-white border border-rose-700 transition cursor-pointer flex items-center justify-between shadow-xs'
+        : 'w-full px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50/80 text-rose-900 hover:bg-rose-100 border border-rose-200/80 transition cursor-pointer flex items-center justify-between';
 
       btnFeature.className = scheduleTypeFilter === 'FEATURE'
-        ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-700 text-white border border-teal-700 transition cursor-pointer flex items-center gap-1.5 shadow-sm'
-        : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 transition cursor-pointer flex items-center gap-1.5';
+        ? 'w-full px-3 py-2 rounded-xl text-xs font-bold bg-teal-700 text-white border border-teal-700 transition cursor-pointer flex items-center justify-between shadow-xs'
+        : 'w-full px-3 py-2 rounded-xl text-xs font-semibold bg-teal-50/80 text-teal-900 hover:bg-teal-100 border border-teal-200/80 transition cursor-pointer flex items-center justify-between';
     }
 
     function setHighlightOnly(onlyMe) {
@@ -620,121 +755,195 @@
 
       if (selectedReporter === 'ALL') {
         box.classList.add('hidden');
-        box.classList.remove('flex');
+        box.classList.remove('grid');
         return;
       }
 
       box.classList.remove('hidden');
-      box.classList.add('flex');
+      box.classList.add('grid');
 
       if (filterOnlyMe) {
-        btnOnly.className = 'px-2 py-0.5 rounded-md font-bold bg-blue-900 text-white cursor-pointer';
-        btnAll.className = 'px-2 py-0.5 rounded-md font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer';
+        btnOnly.className = 'py-1 px-2 rounded-md font-bold bg-blue-700 text-white cursor-pointer text-center';
+        btnAll.className = 'py-1 px-2 rounded-md font-semibold text-blue-900 hover:bg-blue-100 cursor-pointer text-center';
       } else {
-        btnOnly.className = 'px-2 py-0.5 rounded-md font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer';
-        btnAll.className = 'px-2 py-0.5 rounded-md font-bold bg-blue-900 text-white cursor-pointer';
+        btnOnly.className = 'py-1 px-2 rounded-md font-semibold text-blue-900 hover:bg-blue-100 cursor-pointer text-center';
+        btnAll.className = 'py-1 px-2 rounded-md font-bold bg-blue-700 text-white cursor-pointer text-center';
       }
     }
 
-    function selectReporter(name) {
-      selectedReporter = name;
-      localStorage.setItem(STORAGE_KEYS.SELECTED_REPORTER, name);
-      updateHighlightToggleUI();
-      renderReporterFilterBar();
-      renderScheduleBoard();
-    }
-
-    function filterReporterPills() {
+    function handleLiveSearchInput() {
       const input = document.getElementById('reporter-search');
       const clearBtn = document.getElementById('clear-search-btn');
-      const query = input.value.trim().toLowerCase();
+      liveSearchQuery = input.value.trim();
 
-      if (query.length > 0) clearBtn.classList.remove('hidden');
-      else clearBtn.classList.add('hidden');
-
-      const buttons = document.querySelectorAll('#reporter-pills button[data-reporter]');
-      buttons.forEach(btn => {
-        const name = btn.getAttribute('data-reporter');
-        if (name === 'ALL' || name.toLowerCase().includes(query)) {
-          btn.classList.remove('hidden');
-        } else {
-          btn.classList.add('hidden');
+      if (liveSearchQuery.length > 0) {
+        clearBtn.classList.remove('hidden');
+        if (selectedReporter !== 'ALL') {
+          selectedReporter = 'ALL';
+          updateHighlightToggleUI();
         }
-      });
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      renderReporterFilterBar();
+      renderScheduleBoard();
     }
 
     function clearSearchInput() {
       const input = document.getElementById('reporter-search');
       input.value = '';
-      filterReporterPills();
+      liveSearchQuery = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      renderReporterFilterBar();
+      renderScheduleBoard();
       input.focus();
     }
 
+    function selectReporter(name, event) {
+      if (event) event.stopPropagation();
+      selectedReporter = (selectedReporter === name && name !== 'ALL') ? 'ALL' : name;
+      localStorage.setItem(STORAGE_KEYS.SELECTED_REPORTER, selectedReporter);
+
+      if (selectedReporter !== 'ALL' && liveSearchQuery) {
+        document.getElementById('reporter-search').value = '';
+        liveSearchQuery = '';
+        document.getElementById('clear-search-btn').classList.add('hidden');
+      }
+
+      updateHighlightToggleUI();
+      renderReporterFilterBar();
+      renderScheduleBoard();
+    }
+
+    function resetAllFilters() {
+      selectedReporter = 'ALL';
+      selectedCardId = null;
+      liveSearchQuery = '';
+      scheduleTypeFilter = 'ALL';
+      document.getElementById('reporter-search').value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      localStorage.setItem(STORAGE_KEYS.SELECTED_REPORTER, 'ALL');
+      updateScheduleTypeButtons();
+      updateHighlightToggleUI();
+      renderReporterFilterBar();
+      renderScheduleBoard();
+    }
+
+    // DANH SÁCH NHÂN SỰ HIỆN ĐẠI (THẺ 2 CỘT TRÊN MOBILE, GỌN ĐẸP TRÊN DESKTOP)
     function renderReporterFilterBar() {
       const container = document.getElementById('reporter-pills');
       const badge = document.getElementById('reporter-count-badge');
-      badge.textContent = `${parsedState.reporters.length} nhân sự`;
+      const queryLower = liveSearchQuery.toLowerCase();
+
+      const filteredReporters = queryLower
+        ? parsedState.reporters.filter(p => p.toLowerCase().includes(queryLower))
+        : parsedState.reporters;
+
+      badge.textContent = `${filteredReporters.length} người`;
 
       let html = `
-        <button data-reporter="ALL" onclick="selectReporter('ALL')" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-          selectedReporter === 'ALL'
-            ? 'bg-slate-900 text-white shadow-sm'
+        <button onclick="selectReporter('ALL')" class="col-span-full px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-between ${
+          selectedReporter === 'ALL' && !queryLower
+            ? 'bg-blue-800 text-white shadow-xs'
             : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
         }">
-          <i class="fa-solid fa-users text-[11px]"></i>
-          <span>Tất cả phòng</span>
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-users text-[11px]"></i>
+            <span>Tất cả nhân sự</span>
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${selectedReporter === 'ALL' && !queryLower ? 'bg-white/20 text-white' : 'bg-white text-slate-700'}">${parsedState.reporters.length}</span>
         </button>
       `;
 
-      parsedState.reporters.forEach(person => {
+      filteredReporters.forEach(person => {
         const isSelected = selectedReporter === person;
-        const conflictCount = parsedState.conflicts[person];
+        const count = parsedState.taskCounts[person] || 0;
+        const hasDuty = parsedState.dutyItem && parsedState.dutyItem.crew.includes(person);
+        const info = normalizePersonToken(person);
+
+        let countText = `${count} lịch`;
+        if (count === 0 && hasDuty) countText = 'Trực TTTS';
+        else if (count > 0 && hasDuty) countText = `${count} + Trực`;
+
+        const pillBadgeStyle = isSelected
+          ? 'bg-white text-blue-900'
+          : count >= 2
+            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+            : hasDuty && count === 0
+              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+              : 'bg-slate-100 text-slate-600';
+
         html += `
-          <button data-reporter="${person}" onclick="selectReporter('${person.replace(/'/g, "\\'")}')" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border ${
+          <button onclick="selectReporter('${person.replace(/'/g, "\\'")}')" class="group px-3 py-2 rounded-xl text-xs transition cursor-pointer flex items-center justify-between border ${
             isSelected
-              ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
-              : 'bg-white hover:bg-blue-50 text-slate-700 border-slate-200'
+              ? 'bg-blue-700 text-white border-blue-700 shadow-sm ring-2 ring-blue-200'
+              : 'bg-white hover:bg-blue-50/80 hover:border-blue-300 text-slate-800 border-slate-200/90'
           }">
-            <span>${person}</span>
-            ${conflictCount ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-amber-100 text-amber-800'}" title="Có ${conflictCount} lịch trong ngày">${conflictCount}</span>` : ''}
+            <span class="flex items-center gap-1.5 min-w-0 truncate">
+              <span class="w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? 'bg-amber-300' : count >= 2 ? 'bg-amber-500' : 'bg-blue-500'}"></span>
+              <span class="truncate font-bold">${info.displayName}</span>
+              ${info.isCTV ? `<span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase ${isSelected ? 'bg-blue-900 text-blue-100' : 'bg-purple-100 text-purple-800'}">CTV</span>` : ''}
+            </span>
+            <span class="shrink-0 ml-2 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${pillBadgeStyle}">
+              ${countText}
+            </span>
           </button>
         `;
       });
 
       container.innerHTML = html;
-      filterReporterPills();
     }
 
+    // =========================================================================
+    // HIỂN THỊ BẢNG LỊCH BÊN PHẢI & KHỐI TTTS RIÊNG Ở DƯỚI CÙNG
+    // =========================================================================
     function renderScheduleBoard() {
-      document.getElementById('global-rules-box').classList.remove('hidden');
       document.getElementById('schedule-main-title').textContent = parsedState.title;
-      document.getElementById('rule-early-text').textContent = parsedState.earlyRule;
-      document.getElementById('rule-standby-text').textContent = parsedState.standbyRule;
 
       const hasSelectedPerson = selectedReporter !== 'ALL';
-      const applyStrictFilter = hasSelectedPerson && filterOnlyMe;
+      const hasLiveQuery = liveSearchQuery.length > 0;
+      const queryLower = liveSearchQuery.toLowerCase();
 
-      // Đếm số lượng 2 nhóm lịch trên toàn dữ liệu hiện tại
-      const baseItems = applyStrictFilter
-        ? parsedState.items.filter(it => it.crew.includes(selectedReporter))
-        : parsedState.items;
+      const resetBtn = document.getElementById('reset-all-filters-btn');
+      if (hasSelectedPerson || hasLiveQuery || scheduleTypeFilter !== 'ALL' || selectedCardId) {
+        resetBtn.classList.remove('hidden');
+      } else {
+        resetBtn.classList.add('hidden');
+      }
+
+      let baseItems = parsedState.items;
+      if (hasLiveQuery) {
+        baseItems = parsedState.items.filter(it =>
+          it.crew.some(person => person.toLowerCase().includes(queryLower))
+        );
+      } else if (hasSelectedPerson && filterOnlyMe) {
+        baseItems = parsedState.items.filter(it => it.crew.includes(selectedReporter));
+      }
 
       const newsTotal = baseItems.filter(it => it.category.group === 'NEWS').length;
       const featureTotal = baseItems.filter(it => it.category.group === 'FEATURE').length;
+      document.getElementById('badge-count-all').textContent = baseItems.length;
       document.getElementById('badge-count-news').textContent = newsTotal;
       document.getElementById('badge-count-feature').textContent = featureTotal;
 
-      // Áp dụng thêm bộ lọc loại lịch (NEWS / FEATURE / ALL)
       const visibleItems = scheduleTypeFilter === 'ALL'
         ? baseItems
         : baseItems.filter(it => it.category.group === scheduleTypeFilter);
 
-      // Banner tên cá nhân khi đang chọn
       const bannerEl = document.getElementById('active-filter-banner');
       const personalSummaryEl = document.getElementById('personal-status-summary');
-      if (hasSelectedPerson) {
+
+      if (hasLiveQuery) {
         bannerEl.classList.remove('hidden');
-        document.getElementById('selected-reporter-label').textContent = selectedReporter;
+        document.getElementById('selected-reporter-label').innerHTML =
+          `Tìm nhân sự: <strong class="underline decoration-amber-300 underline-offset-2">"${liveSearchQuery}"</strong>`;
+        personalSummaryEl.classList.add('hidden');
+      } else if (hasSelectedPerson) {
+        bannerEl.classList.remove('hidden');
+        const info = normalizePersonToken(selectedReporter);
+        document.getElementById('selected-reporter-label').innerHTML =
+          `Nhân sự: <strong class="underline decoration-amber-300 underline-offset-2">${selectedReporter}</strong>${info.isCTV ? ' (Cộng tác viên)' : ''}`;
 
         const myItems = parsedState.items.filter(it => it.crew.includes(selectedReporter));
         const hasDuty = parsedState.dutyItem && parsedState.dutyItem.crew.includes(selectedReporter);
@@ -744,18 +953,18 @@
           personalSummaryEl.innerHTML = `
             <div class="flex items-center gap-2.5 text-xs sm:text-sm text-blue-950">
               <i class="fa-solid fa-building-user text-blue-700 text-base"></i>
-              <span><strong>${selectedReporter}</strong> hiện không có lịch đi tuyến ngoài cơ quan — thực hiện <strong>trực đột xuất tại trụ sở</strong> theo quy định phòng.</span>
+              <span><strong>${selectedReporter}</strong> hiện không có lịch ngoài cơ quan — thực hiện trực đột xuất tại trụ sở.</span>
             </div>
           `;
         } else {
-          const timeList = myItems.map(i => `<span class="px-1.5 py-0.5 rounded bg-blue-900 text-white text-[11px] font-bold">${i.displayTime}</span>`).join(' ');
+          const timeList = myItems.map(i => `<span class="px-2 py-0.5 rounded-md bg-blue-700 text-white text-[11px] font-bold">${i.displayTime}</span>`).join(' ');
           personalSummaryEl.innerHTML = `
             <div class="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-blue-950">
               <div class="flex items-center gap-2">
                 <i class="fa-solid fa-calendar-check text-blue-700 text-base"></i>
-                <span><strong>${selectedReporter}</strong> có <strong>${myItems.length}</strong> tuyến tác nghiệp${hasDuty ? ' và <strong>1 ca trực TTTS</strong>' : ''}:</span>
+                <span><strong>${selectedReporter}</strong> có <strong>${myItems.length}</strong> lịch trong ngày${hasDuty ? ' và <strong>1 ca trực TTTS</strong>' : ''}:</span>
               </div>
-              <div class="flex items-center gap-1 flex-wrap">${timeList}</div>
+              <div class="flex items-center gap-1.5 flex-wrap">${timeList}</div>
             </div>
           `;
         }
@@ -764,48 +973,78 @@
         personalSummaryEl.classList.add('hidden');
       }
 
-      // Thống kê tổng quan
       document.getElementById('stat-total').textContent = visibleItems.length;
       const conflictCount = Object.keys(parsedState.conflicts).length;
       const conflictBox = document.getElementById('stat-conflict-box');
-      if (!applyStrictFilter && conflictCount > 0) {
+      if (!hasLiveQuery && !(hasSelectedPerson && filterOnlyMe) && conflictCount > 0) {
         conflictBox.classList.remove('hidden');
         document.getElementById('stat-conflicts').textContent = conflictCount;
       } else {
         conflictBox.classList.add('hidden');
       }
 
-      // Render theo Chế độ xem đã chọn
-      if (viewMode === 'matrix') {
-        renderMatrixByReporterView(visibleItems, applyStrictFilter);
+      if (viewMode === 'grid') {
+        renderTimeGridMatrixView(visibleItems);
+      } else if (viewMode === 'matrix') {
+        renderMatrixByReporterView(visibleItems);
       } else if (viewMode === 'timeline') {
-        renderTimelineView(visibleItems, applyStrictFilter);
+        renderTimelineView(visibleItems);
       } else {
-        renderSplitTwoSchedulesView(visibleItems, applyStrictFilter);
+        renderSplitTwoSchedulesView(visibleItems);
       }
+
+      // Render khối TTTS độc lập ở dưới cùng (không nằm trong mục nào)
+      renderBottomTTTSBlock();
 
       const now = new Date();
       document.getElementById('generated-timestamp').textContent =
         `Cập nhật lúc ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} • ${now.toLocaleDateString('vi-VN')}`;
     }
 
-    // CHẾ ĐỘ MẶC ĐỊNH: TÁCH RÕ 2 BẢNG LỊCH (1. THỜI SỰ, HỌP, TIN | 2. CHUYÊN TRANG, CHUYÊN MỤC)
-    function renderSplitTwoSchedulesView(visibleItems, applyStrictFilter) {
+    function renderBottomTTTSBlock() {
+      const tttsEl = document.getElementById('ttts-bottom-section');
+      if (!parsedState.dutyItem) {
+        tttsEl.classList.add('hidden');
+        tttsEl.innerHTML = '';
+        return;
+      }
+
+      // Kiểm tra điều kiện lọc hiện tại
+      let visible = true;
+      if (liveSearchQuery.length > 0) {
+        const q = liveSearchQuery.toLowerCase();
+        visible = parsedState.dutyItem.crew.some(p => p.toLowerCase().includes(q));
+      } else if (selectedReporter !== 'ALL' && filterOnlyMe) {
+        visible = parsedState.dutyItem.crew.includes(selectedReporter);
+      }
+
+      if (!visible) {
+        tttsEl.classList.add('hidden');
+        tttsEl.innerHTML = '';
+        return;
+      }
+
+      tttsEl.classList.remove('hidden');
+      tttsEl.innerHTML = `
+        <div class="pt-4 border-t-2 border-dashed border-slate-200">
+          ${renderDutyCard(parsedState.dutyItem)}
+        </div>
+      `;
+    }
+
+    // CHẾ ĐỘ 1: THEO NHÓM LỊCH (THỜI SỰ & SẢN XUẤT)
+    function renderSplitTwoSchedulesView(visibleItems) {
       const newsItems = visibleItems.filter(it => it.category.group === 'NEWS');
       const featureItems = visibleItems.filter(it => it.category.group === 'FEATURE');
-      const showDuty = parsedState.dutyItem &&
-        scheduleTypeFilter !== 'FEATURE' &&
-        (!applyStrictFilter || parsedState.dutyItem.crew.includes(selectedReporter));
 
       let html = '';
 
-      // KHỐI 1: LỊCH THỜI SỰ, HỌP, TIN & SỰ KIỆN
       if (scheduleTypeFilter === 'ALL' || scheduleTypeFilter === 'NEWS') {
         const shiftConfigs = [
-          { key: 'morning', label: 'Ca Sáng (Trước 12h00)', dotClass: 'bg-amber-500', textClass: 'text-amber-800 bg-amber-50 border-amber-200' },
-          { key: 'afternoon', label: 'Ca Chiều (12h00 – 17h59)', dotClass: 'bg-sky-600', textClass: 'text-sky-800 bg-sky-50 border-sky-200' },
-          { key: 'evening', label: 'Ca Tối (Từ 18h00)', dotClass: 'bg-indigo-600', textClass: 'text-indigo-800 bg-indigo-50 border-indigo-200' },
-          { key: 'anytime', label: 'Trong ngày', dotClass: 'bg-slate-600', textClass: 'text-slate-700 bg-slate-100 border-slate-200' }
+          { key: 'morning', label: 'Ca Sáng (Trước 12h00)', dotClass: 'bg-amber-500', textClass: 'text-amber-900 bg-amber-50 border-amber-200' },
+          { key: 'afternoon', label: 'Ca Chiều (12h00 – 17h59)', dotClass: 'bg-sky-600', textClass: 'text-sky-900 bg-sky-50 border-sky-200' },
+          { key: 'evening', label: 'Ca Tối (Từ 18h00)', dotClass: 'bg-indigo-600', textClass: 'text-indigo-900 bg-indigo-50 border-indigo-200' },
+          { key: 'anytime', label: 'Trong ngày', dotClass: 'bg-blue-600', textClass: 'text-blue-900 bg-blue-50 border-blue-200' }
         ];
 
         let newsBodyHtml = '';
@@ -814,86 +1053,75 @@
           if (itemsInShift.length === 0) return;
 
           newsBodyHtml += `
-            <div class="space-y-2">
-              <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[11px] font-bold ${sc.textClass}">
+            <div class="space-y-2.5">
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold ${sc.textClass}">
                 <span class="w-1.5 h-1.5 rounded-full ${sc.dotClass}"></span>
                 <span>${sc.label}</span>
               </div>
-              <div class="relative pl-4 sm:pl-5 border-l-2 border-rose-200 space-y-2.5 ml-1.5">
-                ${itemsInShift.map(item => renderTaskCard(item, sc.dotClass)).join('')}
+              <div class="space-y-2.5">
+                ${itemsInShift.map(item => renderTaskCard(item, 'rose')).join('')}
               </div>
             </div>
           `;
         });
 
-        if (showDuty) {
-          newsBodyHtml += `
-            <div class="pt-1">
-              <div class="relative pl-4 sm:pl-5 border-l-2 border-emerald-200 ml-1.5">
-                ${renderDutyCard(parsedState.dutyItem)}
-              </div>
-            </div>
-          `;
-        }
-
         html += `
-          <div class="rounded-2xl border-2 border-rose-200/90 bg-gradient-to-b from-rose-50/40 to-white p-3.5 sm:p-5 space-y-4">
+          <div class="rounded-2xl border border-rose-200/90 bg-gradient-to-b from-rose-50/35 to-white p-4 sm:p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-rose-200/80">
               <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-rose-700 text-white flex items-center justify-center shadow-sm shrink-0">
+                <div class="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <i class="fa-solid fa-tower-broadcast text-sm"></i>
                 </div>
                 <div>
-                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-600">PHẦN 1 • TIN NÓNG & HOẠT ĐỘNG LÃNH ĐẠO</span>
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-600">PHẦN 1 • TIN NÓNG & HỘI NGHỊ</span>
                   <h3 class="text-sm sm:text-base font-extrabold text-slate-900">LỊCH THỜI SỰ, HỌP, TIN & SỰ KIỆN</h3>
                 </div>
               </div>
               <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-900 text-xs font-extrabold border border-rose-200">
-                ${newsItems.length} tuyến${showDuty ? ' + Trực TTTS' : ''}
+                ${newsItems.length} lịch
               </span>
             </div>
 
-            ${newsBodyHtml || `
-              <div class="text-center py-5 text-xs text-slate-500 bg-white rounded-xl border border-rose-100">
-                Không có lịch Thời sự, Họp, Tin nào trong bộ lọc này.
-              </div>
-            `}
+            <div class="space-y-4">
+              ${newsBodyHtml || `
+                <div class="text-center py-6 text-xs text-slate-500 bg-white rounded-xl border border-rose-100">
+                  Không có lịch Thời sự, Họp, Tin nào phù hợp với bộ lọc.
+                </div>
+              `}
+            </div>
           </div>
         `;
       }
 
-      // KHỐI 2: LỊCH THỰC HIỆN CHUYÊN TRANG, CHUYÊN MỤC & PHÓNG SỰ
       if (scheduleTypeFilter === 'ALL' || scheduleTypeFilter === 'FEATURE') {
         const featureBodyHtml = featureItems.length > 0
-          ? `
-            <div class="relative pl-4 sm:pl-5 border-l-2 border-teal-200 space-y-2.5 ml-1.5">
-              ${featureItems.map(item => renderTaskCard(item, 'bg-teal-600')).join('')}
-            </div>
-          `
+          ? `<div class="space-y-2.5">${featureItems.map(item => renderTaskCard(item, 'teal')).join('')}</div>`
           : `
-            <div class="text-center py-5 text-xs text-slate-500 bg-white rounded-xl border border-teal-100">
-              Không có lịch thực hiện Chuyên trang, Chuyên mục nào trong bộ lọc này.
+            <div class="text-center py-6 text-xs text-slate-500 bg-white rounded-xl border border-teal-100">
+              Không có lịch Sản xuất nào phù hợp với bộ lọc.
             </div>
           `;
 
         html += `
-          <div class="rounded-2xl border-2 border-teal-200/90 bg-gradient-to-b from-teal-50/40 to-white p-3.5 sm:p-5 space-y-4">
+          <div class="rounded-2xl border border-teal-200/90 bg-gradient-to-b from-teal-50/35 to-white p-4 sm:p-5 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-teal-200/80">
               <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-teal-700 text-white flex items-center justify-center shadow-sm shrink-0">
+                <div class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <i class="fa-solid fa-film text-sm"></i>
                 </div>
                 <div>
-                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600">PHẦN 2 • SẢN XUẤT ĐỀ TÀI, PHÓNG SỰ & BÁO IN</span>
-                  <h3 class="text-sm sm:text-base font-extrabold text-slate-900">LỊCH SẢN XUẤT (CHUYÊN TRANG, CHUYÊN MỤC)</h3>
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600">PHẦN 2 • CHUYÊN MỤC, PHÓNG SỰ, GHI HÌNH, CCGT, NCNA</span>
+                  <h3 class="text-sm sm:text-base font-extrabold text-slate-900">LỊCH SẢN XUẤT</h3>
                 </div>
               </div>
               <span class="px-2.5 py-1 rounded-lg bg-teal-100 text-teal-900 text-xs font-extrabold border border-teal-200">
-                ${featureItems.length} tuyến sản xuất
+                ${featureItems.length} lịch sản xuất
               </span>
             </div>
 
-            ${featureBodyHtml}
+            <div>
+              ${featureBodyHtml}
+            </div>
           </div>
         `;
       }
@@ -901,13 +1129,13 @@
       document.getElementById('schedule-sections').innerHTML = html || renderNoMatchBox();
     }
 
-    // CHẾ ĐỘ 1: THEO KHUNG GIỜ (TIMELINE)
-    function renderTimelineView(visibleItems, applyStrictFilter) {
+    // CHẾ ĐỘ 2: CHUNG THEO KHUNG GIỜ
+    function renderTimelineView(visibleItems) {
       const shiftConfigs = [
-        { key: 'morning', title: 'CA SÁNG', subtitle: 'Trước 12h00', icon: 'fa-sun', badgeClass: 'bg-amber-100 text-amber-900 border-amber-200', dotClass: 'bg-amber-500' },
-        { key: 'afternoon', title: 'CA CHIỀU', subtitle: '12h00 – 17h59', icon: 'fa-cloud-sun', badgeClass: 'bg-sky-100 text-sky-900 border-sky-200', dotClass: 'bg-sky-600' },
-        { key: 'evening', title: 'CA TỐI', subtitle: 'Từ 18h00', icon: 'fa-moon', badgeClass: 'bg-indigo-100 text-indigo-900 border-indigo-200', dotClass: 'bg-indigo-600' },
-        { key: 'anytime', title: 'CÔNG TÁC TRONG NGÀY', subtitle: 'Linh hoạt giờ', icon: 'fa-briefcase', badgeClass: 'bg-slate-200 text-slate-800 border-slate-300', dotClass: 'bg-slate-600' }
+        { key: 'morning', title: 'CA SÁNG', subtitle: 'Trước 12h00', icon: 'fa-sun', badgeClass: 'bg-amber-100 text-amber-900 border-amber-200' },
+        { key: 'afternoon', title: 'CA CHIỀU', subtitle: '12h00 – 17h59', icon: 'fa-cloud-sun', badgeClass: 'bg-sky-100 text-sky-900 border-sky-200' },
+        { key: 'evening', title: 'CA TỐI', subtitle: 'Từ 18h00', icon: 'fa-moon', badgeClass: 'bg-indigo-100 text-indigo-900 border-indigo-200' },
+        { key: 'anytime', title: 'TRONG NGÀY', subtitle: 'Linh hoạt giờ', icon: 'fa-briefcase', badgeClass: 'bg-blue-100 text-blue-900 border-blue-200' }
       ];
 
       let sectionsHtml = '';
@@ -915,8 +1143,6 @@
       shiftConfigs.forEach(cfg => {
         const shiftItems = visibleItems.filter(it => it.shift === cfg.key);
         if (shiftItems.length === 0) return;
-
-        const cardsHtml = shiftItems.map(item => renderTaskCard(item, cfg.dotClass)).join('');
 
         sectionsHtml += `
           <div class="space-y-3">
@@ -928,36 +1154,26 @@
               </div>
               <span class="text-[11px] font-semibold text-slate-400">${shiftItems.length} lịch</span>
             </div>
-            <div class="relative pl-4 sm:pl-5 border-l-2 border-slate-200 space-y-2.5 ml-1.5">
-              ${cardsHtml}
+            <div class="space-y-2.5">
+              ${shiftItems.map(item => renderTaskCard(item, item.category.group === 'FEATURE' ? 'teal' : 'rose')).join('')}
             </div>
           </div>
         `;
       });
 
-      const showDuty = parsedState.dutyItem && (!applyStrictFilter || parsedState.dutyItem.crew.includes(selectedReporter));
-      if (showDuty) {
-        sectionsHtml += `
-          <div class="space-y-3">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-xs font-extrabold tracking-wide bg-emerald-100 text-emerald-900 border-emerald-200">
-              <i class="fa-solid fa-headset"></i>
-              <span>TRỰC TÒA SOẠN / TTTS</span>
-            </div>
-            <div class="relative pl-4 sm:pl-5 border-l-2 border-emerald-200 ml-1.5">
-              ${renderDutyCard(parsedState.dutyItem)}
-            </div>
-          </div>
-        `;
-      }
-
       document.getElementById('schedule-sections').innerHTML = sectionsHtml || renderNoMatchBox();
     }
 
-    // CHẾ ĐỘ 2: BẢNG MA TRẬN THEO TỪNG PHÓNG VIÊN / QUAY PHIM
-    function renderMatrixByReporterView(visibleItems, applyStrictFilter) {
-      const targetReporters = applyStrictFilter
-        ? [selectedReporter]
-        : parsedState.reporters;
+    // CHẾ ĐỘ 3: THEO TỪNG NHÂN SỰ
+    function renderMatrixByReporterView(visibleItems) {
+      let targetReporters = parsedState.reporters;
+
+      if (liveSearchQuery.length > 0) {
+        const q = liveSearchQuery.toLowerCase();
+        targetReporters = parsedState.reporters.filter(p => p.toLowerCase().includes(q));
+      } else if (selectedReporter !== 'ALL' && filterOnlyMe) {
+        targetReporters = [selectedReporter];
+      }
 
       if (targetReporters.length === 0) {
         document.getElementById('schedule-sections').innerHTML = renderNoMatchBox();
@@ -965,346 +1181,324 @@
       }
 
       const rowsHtml = targetReporters.map(person => {
-        const personTasks = parsedState.items.filter(it => it.crew.includes(person));
+        const personTasks = visibleItems.filter(it => it.crew.includes(person));
         const hasDuty = parsedState.dutyItem && parsedState.dutyItem.crew.includes(person);
+        if (personTasks.length === 0 && !hasDuty) return '';
+
         const isMe = selectedReporter === person;
         const isMulti = personTasks.length >= 2;
+        const info = normalizePersonToken(person);
 
         const tasksBadgesHtml = personTasks.map(task => {
           const teammates = task.crew.filter(c => c !== person);
+          const isCardSel = selectedCardId === task.id;
           return `
-            <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 text-white text-[11px] font-extrabold shrink-0 self-start">
-                <i class="fa-regular fa-clock text-amber-400 text-[9px]"></i>
-                <span>${task.displayTime}</span>
-              </span>
+            <div onclick="toggleSelectCard('${task.id}')" class="schedule-card cursor-pointer flex flex-col sm:flex-row sm:items-center gap-2.5 p-3 rounded-xl border border-slate-200/90 bg-slate-50/70 ${isCardSel ? 'is-selected-card' : ''}">
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-900 border border-blue-200 text-xs font-extrabold">
+                  <i class="fa-regular fa-clock text-blue-600 text-[11px]"></i>
+                  <span>${task.displayTime}</span>
+                </span>
+                <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold ${task.category.pillClass}">
+                  ${task.category.label}
+                </span>
+              </div>
               <div class="flex-1 min-w-0 text-xs">
-                <p class="font-semibold text-slate-900 leading-snug">${task.content}</p>
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-slate-500">
-                  ${task.location ? `<span><i class="fa-solid fa-location-dot text-red-500 mr-1"></i>${task.location}</span>` : ''}
-                  ${teammates.length > 0 ? `<span><i class="fa-solid fa-user-group text-blue-600 mr-1"></i>Đi cùng: <strong class="text-slate-700">${teammates.join(', ')}</strong></span>` : ''}
+                <p class="font-bold text-slate-900 leading-snug">${task.content}</p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[11px] text-slate-600">
+                  ${task.location ? `<span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${task.location}</span>` : ''}
+                  ${teammates.length > 0 ? `<span><i class="fa-solid fa-user-group text-blue-600 mr-1"></i>Cùng thực hiện: <strong class="text-slate-800">${teammates.join(', ')}</strong></span>` : ''}
                 </div>
               </div>
             </div>
           `;
         }).join('');
 
-        const dutyBadgeHtml = hasDuty ? `
-          <div class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 text-xs text-emerald-950">
-            <span class="px-2 py-0.5 rounded-md bg-emerald-700 text-white text-[11px] font-bold">TRỰC TTTS</span>
-            <span class="font-semibold">${parsedState.dutyItem.label}</span>
+        return `
+          <div class="rounded-xl border ${isMe ? 'border-blue-600 bg-blue-50/25 ring-1 ring-blue-600/20' : 'border-slate-200 bg-white'} p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+              <button onclick="selectReporter('${person.replace(/'/g, "\\'")}', event)" class="text-left font-extrabold text-xs sm:text-sm ${isMe ? 'text-blue-800' : 'text-slate-900'} hover:text-blue-700 cursor-pointer flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : 'bg-blue-400'}"></span>
+                <span>${person}</span>
+                ${info.isCTV ? `<span class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">Cộng tác viên</span>` : ''}
+              </button>
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-extrabold ${isMulti ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-blue-50 text-blue-800 border border-blue-200'}">
+                ${personTasks.length} lịch${hasDuty ? ' + Trực TTTS' : ''}
+              </span>
+            </div>
+
+            <div class="space-y-2">
+              ${tasksBadgesHtml || '<p class="text-xs text-slate-500 italic">Chỉ thực hiện trực TTTS trong ngày.</p>'}
+            </div>
           </div>
-        ` : '';
+        `;
+      }).filter(Boolean).join('');
+
+      document.getElementById('schedule-sections').innerHTML = rowsHtml
+        ? `<div class="space-y-3">${rowsHtml}</div>`
+        : renderNoMatchBox();
+    }
+
+    // =========================================================================
+    // CHẾ ĐỘ 4: BẢNG KẺ Ô (MA TRẬN GIỜ BẬN & GIỜ RẢNH CỦA TỪNG NHÂN SỰ)
+    // =========================================================================
+    function renderTimeGridMatrixView(visibleItems) {
+      let targetReporters = parsedState.reporters;
+      if (liveSearchQuery.length > 0) {
+        const q = liveSearchQuery.toLowerCase();
+        targetReporters = parsedState.reporters.filter(p => p.toLowerCase().includes(q));
+      } else if (selectedReporter !== 'ALL' && filterOnlyMe) {
+        targetReporters = [selectedReporter];
+      }
+
+      if (targetReporters.length === 0 || visibleItems.length === 0) {
+        document.getElementById('schedule-sections').innerHTML = renderNoMatchBox();
+        return;
+      }
+
+      // Lấy danh sách các mốc giờ duy nhất có lịch trong ngày (sắp xếp tăng dần)
+      const timeSlotsMap = new Map();
+      visibleItems.forEach(it => {
+        if (!timeSlotsMap.has(it.displayTime)) {
+          timeSlotsMap.set(it.displayTime, it.sortMinutes);
+        }
+      });
+      const sortedTimeSlots = Array.from(timeSlotsMap.entries())
+        .sort((a, b) => a[1] - b[1])
+        .map(entry => entry[0]);
+
+      const headerCellsHtml = sortedTimeSlots.map(slot => `
+        <th class="border border-slate-300 bg-blue-50/90 px-2.5 py-2.5 text-center text-xs font-extrabold text-blue-950 min-w-[155px]">
+          <div class="inline-flex items-center gap-1">
+            <i class="fa-regular fa-clock text-blue-600 text-[10px]"></i>
+            <span>${slot}</span>
+          </div>
+        </th>
+      `).join('');
+
+      const bodyRowsHtml = targetReporters.map(person => {
+        const isMe = selectedReporter === person;
+        const count = parsedState.taskCounts[person] || 0;
+        const info = normalizePersonToken(person);
+
+        const cellsHtml = sortedTimeSlots.map(slot => {
+          const matchingTasks = visibleItems.filter(it => it.displayTime === slot && it.crew.includes(person));
+          if (matchingTasks.length === 0) {
+            return `
+              <td class="border border-slate-200 bg-emerald-50/20 px-2 py-2 text-center align-middle">
+                <span class="inline-block text-[10px] font-medium text-emerald-700/70 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">Trống</span>
+              </td>
+            `;
+          }
+
+          const taskBlocks = matchingTasks.map(t => {
+            const isFeature = t.category.group === 'FEATURE';
+            const isCardSel = selectedCardId === t.id;
+            const blockStyle = isFeature
+              ? 'bg-teal-50 border-teal-300 text-teal-950 hover:bg-teal-100'
+              : 'bg-rose-50 border-rose-300 text-rose-950 hover:bg-rose-100';
+
+            return `
+              <div onclick="toggleSelectCard('${t.id}')" class="cursor-pointer rounded-lg border p-2 text-left transition ${blockStyle} ${isCardSel ? 'ring-2 ring-blue-600' : ''}">
+                <p class="text-[11px] font-bold leading-snug line-clamp-2">${t.content}</p>
+                ${t.location ? `<p class="text-[10px] opacity-80 mt-0.5 truncate"><i class="fa-solid fa-location-dot mr-1"></i>${t.location}</p>` : ''}
+              </div>
+            `;
+          }).join('<div class="h-1"></div>');
+
+          return `
+            <td class="border border-slate-200 bg-white p-1.5 align-top">
+              ${taskBlocks}
+            </td>
+          `;
+        }).join('');
 
         return `
-          <div class="rounded-xl border ${isMe ? 'border-blue-600 bg-blue-50/30 ring-1 ring-blue-600/20' : 'border-slate-200 bg-white'} p-3.5 flex flex-col md:flex-row md:items-start gap-3">
-            <div class="md:w-44 shrink-0 flex md:flex-col items-center md:items-start justify-between gap-1.5">
-              <button onclick="selectReporter('${person.replace(/'/g, "\\'")}')" class="text-left font-extrabold text-xs sm:text-sm ${isMe ? 'text-blue-900' : 'text-slate-900'} hover:text-blue-700 cursor-pointer flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full ${isMe ? 'bg-blue-600' : 'bg-slate-400'}"></span>
-                <span>${person}</span>
-              </button>
-              <div class="flex items-center gap-1.5">
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${isMulti ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-100 text-slate-600'}">
-                  ${personTasks.length} tuyến${hasDuty ? ' + Trực' : ''}
-                </span>
+          <tr class="${isMe ? 'bg-blue-50/40' : 'hover:bg-slate-50/80'}">
+            <td class="sticky left-0 z-10 border border-slate-300 ${isMe ? 'bg-blue-100 text-blue-950' : 'bg-white text-slate-900'} px-3 py-2.5 font-extrabold text-xs whitespace-nowrap">
+              <div class="flex items-center justify-between gap-2">
+                <button onclick="selectReporter('${person.replace(/'/g, "\\'")}', event)" class="hover:text-blue-700 cursor-pointer text-left">
+                  ${info.displayName} ${info.isCTV ? '<span class="text-[9px] px-1 py-0.2 rounded bg-purple-100 text-purple-800">CTV</span>' : ''}
+                </button>
+                <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${count >= 2 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">${count}</span>
               </div>
-            </div>
-
-            <div class="flex-1 space-y-2">
-              ${tasksBadgesHtml}
-              ${dutyBadgeHtml}
-            </div>
-          </div>
+            </td>
+            ${cellsHtml}
+          </tr>
         `;
       }).join('');
 
       document.getElementById('schedule-sections').innerHTML = `
         <div class="space-y-3">
-          <div class="flex items-center justify-between text-xs text-slate-500">
-            <span class="font-bold uppercase tracking-wider text-slate-700">Phân bổ công việc theo từng nhân sự (${targetReporters.length} người)</span>
-            <span>Bấm vào tên để ghim</span>
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-3">
+              <span class="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                <span class="w-3 h-3 rounded bg-rose-100 border border-rose-300"></span> Bận (Thời sự / Họp)
+              </span>
+              <span class="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                <span class="w-3 h-3 rounded bg-teal-100 border border-teal-300"></span> Bận (Sản xuất)
+              </span>
+              <span class="inline-flex items-center gap-1.5 font-semibold text-emerald-700">
+                <span class="w-3 h-3 rounded bg-emerald-50 border border-emerald-200"></span> Trống lịch
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-500">Kéo ngang bảng để xem đủ các khung giờ</span>
           </div>
-          <div class="space-y-2.5">${rowsHtml}</div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-300 shadow-xs custom-scrollbar">
+            <table class="w-full border-collapse text-left">
+              <thead>
+                <tr>
+                  <th class="sticky left-0 z-20 border border-slate-300 bg-slate-100 px-3 py-2.5 text-xs font-extrabold text-slate-800 min-w-[165px]">
+                    Nhân sự / Khung giờ
+                  </th>
+                  ${headerCellsHtml}
+                </tr>
+              </thead>
+              <tbody>
+                ${bodyRowsHtml}
+              </tbody>
+            </table>
+          </div>
         </div>
       `;
-    }
-
-    // CHẾ ĐỘ 3: THEO MẢNG CÔNG VIỆC (LÃNH ĐẠO / PHÓNG SỰ / SỰ KIỆN)
-    function renderCategoryView(visibleItems, applyStrictFilter) {
-      const catGroups = [
-        { key: 'leader', title: 'TIN LÃNH ĐẠO TỈNH & HỘI NGHỊ', icon: 'fa-landmark', badgeClass: 'bg-rose-100 text-rose-900 border-rose-200', dotClass: 'bg-rose-600' },
-        { key: 'feature', title: 'PHÓNG SỰ, CHUYÊN MỤC & BÁO IN', icon: 'fa-film', badgeClass: 'bg-teal-100 text-teal-900 border-teal-200', dotClass: 'bg-teal-600' },
-        { key: 'event', title: 'SỰ KIỆN, LỄ HỘI & HOẠT ĐỘNG KHÁC', icon: 'fa-bullhorn', badgeClass: 'bg-violet-100 text-violet-900 border-violet-200', dotClass: 'bg-violet-600' }
-      ];
-
-      let sectionsHtml = '';
-
-      catGroups.forEach(grp => {
-        const grpItems = visibleItems.filter(it => it.category.key === grp.key);
-        if (grpItems.length === 0) return;
-
-        const cardsHtml = grpItems.map(item => renderTaskCard(item, grp.dotClass)).join('');
-        sectionsHtml += `
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-xs font-extrabold tracking-wide ${grp.badgeClass}">
-                <i class="fa-solid ${grp.icon}"></i>
-                <span>${grp.title}</span>
-              </div>
-              <span class="text-[11px] font-semibold text-slate-400">${grpItems.length} tuyến</span>
-            </div>
-            <div class="relative pl-4 sm:pl-5 border-l-2 border-slate-200 space-y-2.5 ml-1.5">
-              ${cardsHtml}
-            </div>
-          </div>
-        `;
-      });
-
-      const showDuty = parsedState.dutyItem && (!applyStrictFilter || parsedState.dutyItem.crew.includes(selectedReporter));
-      if (showDuty) {
-        sectionsHtml += `
-          <div class="space-y-3">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-xs font-extrabold tracking-wide bg-emerald-100 text-emerald-900 border-emerald-200">
-              <i class="fa-solid fa-headset"></i>
-              <span>TRỰC TÒA SOẠN / TTTS</span>
-            </div>
-            <div class="relative pl-4 sm:pl-5 border-l-2 border-emerald-200 ml-1.5">
-              ${renderDutyCard(parsedState.dutyItem)}
-            </div>
-          </div>
-        `;
-      }
-
-      document.getElementById('schedule-sections').innerHTML = sectionsHtml || renderNoMatchBox();
     }
 
     function renderNoMatchBox() {
       return `
         <div class="text-center py-8 px-4 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-500">
-          Không có lịch đi tuyến nào phù hợp với bộ lọc hiện tại.
+          Không có lịch nào phù hợp với điều kiện lọc hiện tại.
         </div>
       `;
     }
 
-    function renderTaskCard(item, dotClass) {
-      const isMyCard = selectedReporter !== 'ALL' && item.crew.includes(selectedReporter);
+    // =========================================================================
+    // CARD LỊCH CÂN ĐỐI 3 CỘT (CÓ NỔI BẬT MÀU KHI HOVER & CLICK CHỌN CARD)
+    // =========================================================================
+    function renderTaskCard(item, accentTone = 'rose') {
+      const queryLower = liveSearchQuery.toLowerCase();
+      const isPersonHighlighted =
+        (selectedReporter !== 'ALL' && item.crew.includes(selectedReporter)) ||
+        (queryLower.length > 0 && item.crew.some(p => p.toLowerCase().includes(queryLower)));
+      const isCardSelected = selectedCardId === item.id;
 
-      const crewHtml = item.crew.map((person, index) => {
-        const isHighlighted = selectedReporter === person;
-        const isMultiTask = parsedState.conflicts[person] >= 2;
-        const initials = getPersonInitials(person);
-        const roleTag = item.crew.length > 1
-          ? (index === 0 ? 'PV / Phụ trách' : (index === item.crew.length - 1 ? 'QP / Phối hợp' : 'Phối hợp'))
-          : 'Thực hiện';
+      const timeBoxStyle = accentTone === 'teal'
+        ? 'bg-teal-50/90 text-teal-950 border-teal-200'
+        : 'bg-blue-50/90 text-blue-950 border-blue-200';
+
+      const timeIconColor = accentTone === 'teal' ? 'text-teal-600' : 'text-blue-600';
+
+      const crewHtml = item.crew.map(person => {
+        const isHighlighted =
+          selectedReporter === person ||
+          (queryLower.length > 0 && person.toLowerCase().includes(queryLower));
+        const count = parsedState.taskCounts[person] || 0;
+        const info = normalizePersonToken(person);
 
         return `
-          <button onclick="selectReporter('${person.replace(/'/g, "\\'")}')" class="group inline-flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl text-left transition cursor-pointer border ${
+          <button onclick="selectReporter('${person.replace(/'/g, "\\'")}', event)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer border ${
             isHighlighted
-              ? 'bg-blue-900 text-white border-blue-900 shadow-sm ring-2 ring-blue-300'
-              : 'bg-slate-50 hover:bg-blue-50/90 text-slate-800 border-slate-200/90 hover:border-blue-300'
-          }" title="${isMultiTask ? `${person} có ${parsedState.conflicts[person]} lịch trong ngày` : `Bấm để lọc riêng lịch của ${person}`}">
-            <span class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold shrink-0 ${
-              isHighlighted
-                ? 'bg-amber-400 text-slate-950'
-                : 'bg-slate-200/90 text-slate-700 group-hover:bg-blue-600 group-hover:text-white'
-            } transition">
-              ${initials}
-            </span>
-            <span class="flex flex-col leading-none">
-              <span class="text-xs font-extrabold tracking-tight flex items-center gap-1">
-                <span>${person}</span>
-                ${isMultiTask && !isHighlighted ? `<span class="px-1 py-0.2 rounded bg-amber-100 text-amber-800 text-[9px] font-extrabold border border-amber-300" title="Chạy ${parsedState.conflicts[person]} tuyến">${parsedState.conflicts[person]}x</span>` : ''}
-              </span>
-              <span class="text-[9px] font-medium mt-0.5 ${isHighlighted ? 'text-blue-200' : 'text-slate-400'}">${roleTag}</span>
-            </span>
+              ? 'bg-blue-700 text-white border-blue-700 shadow-xs ring-2 ring-blue-200'
+              : info.isCTV
+                ? 'bg-purple-50/80 hover:bg-purple-100 text-purple-950 border-purple-200'
+                : 'bg-slate-50 hover:bg-blue-100/80 text-slate-800 border-slate-200 hover:border-blue-300'
+          }" title="${info.isCTV ? 'Cộng tác viên – Bấm để lọc lịch' : 'Bấm để lọc lịch'}">
+            <span>${info.displayName}</span>
+            ${info.noteTag && !info.isCTV ? `<span class="px-1.5 py-0.2 rounded text-[10px] font-semibold ${isHighlighted ? 'bg-blue-800 text-blue-100' : 'bg-slate-200 text-slate-600'}">${info.noteTag}</span>` : ''}
+            ${count >= 2 && !isHighlighted ? `<span class="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[9px] font-extrabold border border-amber-300" title="Có ${count} lịch trong ngày">${count}</span>` : ''}
           </button>
         `;
       }).join('');
 
-      const mapsUrl = item.location
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location + ' Đồng Tháp')}`
-        : '';
+      let cardStateClasses = '';
+      if (isCardSelected) cardStateClasses = 'is-selected-card';
+      else if (isPersonHighlighted) cardStateClasses = 'is-person-highlight';
 
       return `
-        <div class="relative rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4 card-hover ${isMyCard ? 'my-task-highlight' : ''}">
-          <span class="absolute -left-[21px] sm:-left-[25px] top-4 w-2.5 h-2.5 rounded-full ${dotClass} ring-4 ring-white"></span>
-          
-          <div class="space-y-2.5">
-            <!-- Hàng 1: Giờ, Phân loại & Nút nhắc lịch -->
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-1.5">
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-900 text-white text-xs font-extrabold tracking-wide">
-                  <i class="fa-regular fa-clock text-[10px] text-amber-400"></i>
-                  <span>${item.displayTime}</span>
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold ${item.category.pillClass}">
-                  <i class="fa-solid ${item.category.icon} text-[9px]"></i>
-                  <span>${item.category.label}</span>
-                </span>
-                ${item.departureNote ? `
+        <div onclick="toggleSelectCard('${item.id}')" class="schedule-card cursor-pointer rounded-xl border border-slate-200/90 bg-white p-3.5 sm:p-4 ${cardStateClasses}">
+          <div class="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+            
+            <!-- CỘT 1: KHỐI GIỜ & PHÂN LOẠI -->
+            <div class="flex md:flex-col items-center md:items-start justify-between md:justify-center gap-1.5 md:w-36 shrink-0 md:border-r md:border-slate-100 md:pr-3">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${timeBoxStyle} font-extrabold text-xs sm:text-sm tracking-tight">
+                <i class="fa-regular fa-clock ${timeIconColor} text-xs"></i>
+                <span>${item.displayTime}</span>
+              </div>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold ${item.category.pillClass}">
+                <i class="fa-solid ${item.category.icon} text-[9px]"></i>
+                <span>${item.category.label}</span>
+              </span>
+            </div>
+
+            <!-- CỘT 2: NỘI DUNG LỊCH & ĐỊA ĐIỂM -->
+            <div class="flex-1 min-w-0 space-y-1.5">
+              ${item.departureNote ? `
+                <div>
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-semibold">
                     <i class="fa-solid fa-van-shuttle text-[10px]"></i>
                     <span>${item.departureNote}</span>
                   </span>
-                ` : ''}
+                </div>
+              ` : ''}
+
+              <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                ${item.content}
+              </p>
+
+              ${item.location ? `
+                <div class="flex items-start gap-1.5 text-xs text-slate-600">
+                  <i class="fa-solid fa-location-dot text-rose-500 text-[11px] mt-0.5 shrink-0"></i>
+                  <span class="font-medium">${item.location}</span>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- CỘT 3: NHÂN SỰ THỰC HIỆN & NHẮC LỊCH -->
+            <div class="pt-2.5 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-4 md:w-64 lg:w-72 shrink-0 flex flex-col md:items-end justify-between gap-2">
+              <div class="flex flex-wrap md:justify-end items-center gap-1.5">
+                ${crewHtml || '<span class="text-xs italic text-slate-400">Chưa phân công</span>'}
               </div>
 
               ${item.shift !== 'anytime' ? `
-                <a href="${buildGoogleCalendarUrl(item)}" target="_blank" rel="noopener noreferrer" class="no-export inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-700 border border-slate-200 text-[11px] font-medium transition" title="Lưu nhắc việc vào Google Calendar">
+                <a href="${buildGoogleCalendarUrl(item)}" onclick="event.stopPropagation()" target="_blank" rel="noopener noreferrer" class="self-start md:self-end inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 hover:bg-blue-100 text-slate-500 hover:text-blue-700 border border-slate-200/80 text-[10px] font-semibold transition" title="Lưu nhắc việc vào Google Calendar">
                   <i class="fa-regular fa-calendar-plus"></i>
                   <span>Nhắc lịch</span>
                 </a>
               ` : ''}
             </div>
 
-            <!-- Hàng 2: Nội dung công việc & Địa điểm -->
-            <div class="space-y-1">
-              <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
-                ${item.content}
-              </p>
-
-              ${item.location ? `
-                <div class="flex items-center gap-1.5 text-xs text-slate-600">
-                  <i class="fa-solid fa-location-dot text-red-500 text-[11px] shrink-0"></i>
-                  <span class="truncate">${item.location}</span>
-                  <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="no-export inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 hover:underline shrink-0 ml-1" title="Mở chỉ đường trên Google Maps">
-                    <span>Bản đồ</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                  </a>
-                </div>
-              ` : ''}
-            </div>
-
-            <!-- Hàng 3: Khung Ê-kíp thực hiện trực quan -->
-            <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1 mr-0.5">
-                <i class="fa-solid fa-user-group text-slate-400"></i>
-                <span>Ê-kíp:</span>
-              </span>
-              <div class="flex flex-wrap items-center gap-1.5">
-                ${crewHtml || '<span class="text-xs italic text-slate-400">Chưa phân công</span>'}
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    // =========================================================================
-    // KHỞI TẠO KHI LOAD TRANG (BẢN SẠCH CHO GITHUB PAGES)
-    // =========================================================================
-    window.addEventListener('DOMContentLoaded', () => {
-      const textarea = document.getElementById('raw-schedule-input');
-      let hasInitialData = false;
-
-      // Khôi phục chế độ xem & tùy chọn lọc cá nhân
-      const savedView = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
-      if (savedView && ['split', 'timeline', 'matrix'].includes(savedView)) {
-        viewMode = savedView;
-      }
-      updateViewModeButtons();
-      updateScheduleTypeButtons();
-      const savedHighlightOnly = localStorage.getItem(STORAGE_KEYS.HIGHLIGHT_ONLY);
-      if (savedHighlightOnly !== null) {
-        filterOnlyMe = savedHighlightOnly === 'true';
-      }
-
-      // 1. Ưu tiên đọc từ URL Hash (#data=...) nếu mở từ link chia sẻ trên Zalo
-      const hash = window.location.hash;
-      if (hash && hash.startsWith('#data=')) {
-        try {
-          const compressed = hash.slice(6);
-          const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
-          if (decompressed && decompressed.trim().length > 0) {
-            textarea.value = decompressed;
-            localStorage.setItem(STORAGE_KEYS.RAW_TEXT, decompressed);
-            hasInitialData = true;
-          }
-        } catch (e) {
-          console.warn('Không thể giải mã dữ liệu từ URL hash:', e);
-        }
-      }
-
-      // 2. Nếu không có trong URL Hash, kiểm tra dữ liệu đã lưu trên trình duyệt người dùng
-      if (!hasInitialData) {
-        const savedRaw = localStorage.getItem(STORAGE_KEYS.RAW_TEXT);
-        if (savedRaw && savedRaw.trim().length > 0) {
-          textarea.value = savedRaw;
-          hasInitialData = true;
-        } else {
-          textarea.value = '';
-        }
-      }
-
-      // 3. Khôi phục phóng viên đang ghim
-      const savedReporter = localStorage.getItem(STORAGE_KEYS.SELECTED_REPORTER);
-      if (savedReporter) {
-        selectedReporter = savedReporter;
-      }
-      updateHighlightToggleUI();
-
-      if (hasInitialData) {
-        parseAndRender(false, false);
-        if (hash && hash.startsWith('#data=')) {
-          showToast('Đã tải lịch công tác từ liên kết chia sẻ!', 'success');
-        }
-      } else {
-        toggleInputModal(true);
-        renderEmptyWelcomeState();
-      }
-    });
-
-    function renderEmptyWelcomeState() {
-      document.getElementById('filter-section').classList.add('hidden');
-      document.getElementById('global-rules-box').classList.add('hidden');
-      document.getElementById('personal-status-summary').classList.add('hidden');
-      document.getElementById('stat-conflict-box').classList.add('hidden');
-      document.getElementById('stat-total').textContent = '0';
-      document.getElementById('schedule-main-title').textContent = 'LỊCH CÔNG TÁC PHÒNG THỜI SỰ';
-
-      const now = new Date();
-      document.getElementById('generated-timestamp').textContent =
-        `Sẵn sàng nhận dữ liệu • ${now.toLocaleDateString('vi-VN')}`;
-
-      document.getElementById('schedule-sections').innerHTML = `
-        <div class="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/70 space-y-3">
-          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xl">
-            <i class="fa-regular fa-calendar-plus"></i>
-          </div>
-          <div class="max-w-md mx-auto space-y-1">
-            <h3 class="text-sm sm:text-base font-bold text-slate-800">Chưa có dữ liệu lịch công tác</h3>
-            <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              Hãy dán tin nhắn phân công lịch của ngày hôm nay vào khung phía trên và bấm <strong>"Hiển thị lịch ngay"</strong> để hệ thống tự động sắp xếp ca và lọc theo từng phóng viên.
-            </p>
           </div>
         </div>
       `;
     }
 
     function renderDutyCard(dutyItem) {
-      const crewHtml = dutyItem.crew.map(person => {
-        const isHighlighted = selectedReporter === person;
-        return `
-          <button onclick="selectReporter('${person.replace(/'/g, "\\'")}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-            isHighlighted
-              ? 'bg-red-600 text-white shadow-sm'
-              : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-300'
-          }">
-            <i class="fa-solid fa-headset text-[10px]"></i>
-            <span>${person}</span>
-          </button>
-        `;
-      }).join('');
+      const queryLower = liveSearchQuery.toLowerCase();
+      const crewHtml = dutyItem.crew.length > 0
+        ? dutyItem.crew.map(person => {
+            const isHighlighted =
+              selectedReporter === person ||
+              (queryLower.length > 0 && person.toLowerCase().includes(queryLower));
+            return `
+              <button onclick="selectReporter('${person.replace(/'/g, "\\'")}', event)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                isHighlighted
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-300'
+              }">
+                <span>${person}</span>
+              </button>
+            `;
+          }).join('')
+        : '<span class="text-xs italic text-emerald-800/70">Chưa phân công</span>';
 
       return `
-        <div class="relative rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <span class="absolute -left-[11px] sm:-left-[13px] top-4 w-2.5 h-2.5 rounded-full bg-emerald-600 border-2 border-white"></span>
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 text-xs">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs">
               <i class="fa-solid fa-tower-observation"></i>
             </div>
             <div>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Trực điều hành</span>
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">TTTS</span>
               <p class="text-xs sm:text-sm font-extrabold text-slate-900">${dutyItem.label}</p>
             </div>
           </div>
@@ -1316,23 +1510,80 @@
     }
 
     // =========================================================================
-    // RENDER GIAO DIỆN
+    // KHỞI TẠO & XỬ LÝ DỮ LIỆU (KHÔNG DỮ LIỆU MẪU)
     // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const textarea = document.getElementById('raw-schedule-input');
+      let hasInitialData = false;
+
+      const savedView = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
+      if (savedView && ['split', 'timeline', 'matrix', 'grid'].includes(savedView)) {
+        viewMode = savedView;
+      }
+      updateViewModeButtons();
+      updateScheduleTypeButtons();
+
+      const savedHighlightOnly = localStorage.getItem(STORAGE_KEYS.HIGHLIGHT_ONLY);
+      if (savedHighlightOnly !== null) {
+        filterOnlyMe = savedHighlightOnly === 'true';
+      }
+
+      const savedRaw = localStorage.getItem(STORAGE_KEYS.RAW_TEXT);
+      if (savedRaw && savedRaw.trim().length > 0) {
+        textarea.value = savedRaw;
+        hasInitialData = true;
+      } else {
+        textarea.value = '';
+      }
+
+      const savedReporter = localStorage.getItem(STORAGE_KEYS.SELECTED_REPORTER);
+      if (savedReporter) {
+        selectedReporter = savedReporter;
+      }
+      updateHighlightToggleUI();
+
+      if (hasInitialData) {
+        parseAndRender(false, false);
+      } else {
+        toggleInputModal(true);
+        renderEmptyWelcomeState();
+      }
+    });
+
+    function renderEmptyWelcomeState() {
+      document.getElementById('filter-section').classList.add('hidden');
+      document.getElementById('personal-status-summary').classList.add('hidden');
+      document.getElementById('stat-conflict-box').classList.add('hidden');
+      document.getElementById('ttts-bottom-section').classList.add('hidden');
+      document.getElementById('stat-total').textContent = '0';
+      document.getElementById('schedule-main-title').textContent = 'LỊCH CÔNG TÁC PHÒNG THỜI SỰ';
+
+      const now = new Date();
+      document.getElementById('generated-timestamp').textContent =
+        `Sẵn sàng nhận dữ liệu • ${now.toLocaleDateString('vi-VN')}`;
+
+      document.getElementById('schedule-sections').innerHTML = `
+        <div class="text-center py-14 px-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/70 space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xl">
+            <i class="fa-regular fa-calendar-plus"></i>
+          </div>
+          <div class="max-w-md mx-auto space-y-1">
+            <h3 class="text-sm sm:text-base font-bold text-slate-800">Chưa có dữ liệu lịch công tác</h3>
+            <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+              Dán tin nhắn phân công lịch vào khung bên trái và bấm <strong>"Cập nhật lên bảng lịch"</strong>.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
     function parseAndRender(showNotify = false, closePanel = false) {
       const rawText = document.getElementById('raw-schedule-input').value;
       localStorage.setItem(STORAGE_KEYS.RAW_TEXT, rawText);
 
-      // Nếu người dùng xóa trống hoàn toàn thì quay về màn hình sạch ban đầu
       if (!rawText.trim()) {
-        history.replaceState(null, '', window.location.pathname);
         renderEmptyWelcomeState();
         return;
-      }
-
-      // Cập nhật âm thầm URL Hash để luôn sẵn sàng copy link chia sẻ
-      if (typeof LZString !== 'undefined') {
-        const compressed = LZString.compressToEncodedURIComponent(rawText);
-        history.replaceState(null, '', '#data=' + compressed);
       }
 
       document.getElementById('filter-section').classList.remove('hidden');
@@ -1351,44 +1602,18 @@
       }
 
       if (showNotify) {
-        showToast(`Đã cập nhật ${parsedState.items.length} đầu việc lên bảng lịch!`, 'success');
+        showToast(`Đã cập nhật ${parsedState.items.length} lịch lên bảng!`, 'success');
       }
-    }
-
-    function loadSampleData() {
-      document.getElementById('raw-schedule-input').value = SAMPLE_RAW_TEXT;
-      parseAndRender(true, false);
     }
 
     function clearInputData() {
       const textarea = document.getElementById('raw-schedule-input');
       textarea.value = '';
+      selectedCardId = null;
       localStorage.removeItem(STORAGE_KEYS.RAW_TEXT);
-      history.replaceState(null, '', window.location.pathname);
       renderEmptyWelcomeState();
       textarea.focus();
       showToast('Đã xóa sạch dữ liệu, sẵn sàng nhập lịch ngày mới!', 'info');
-    }
-
-    // Tạo link GitHub Pages kèm dữ liệu nén trong URL Hash (#data=...)
-    function copyShareableGitHubLink() {
-      const rawText = document.getElementById('raw-schedule-input').value.trim();
-      if (!rawText) {
-        showToast('Chưa có nội dung lịch để tạo link!', 'error');
-        return;
-      }
-
-      const compressed = LZString.compressToEncodedURIComponent(rawText);
-      const baseUrl = window.location.origin + window.location.pathname;
-      const shareUrl = `${baseUrl}#data=${compressed}`;
-
-      // Cập nhật luôn trên thanh địa chỉ hiện tại
-      history.replaceState(null, '', '#data=' + compressed);
-
-      copyTextToClipboard(
-        shareUrl,
-        'Đã copy Link lịch! Gửi link này vào nhóm Zalo, anh em bấm vào là xem được ngay.'
-      );
     }
 
     function buildGoogleCalendarUrl(item) {
@@ -1412,135 +1637,27 @@
       const detailsParam = encodeURIComponent(
         `Thời gian: ${item.displayTime}\n` +
         (item.departureNote ? `Ghi chú di chuyển: ${item.departureNote}\n` : '') +
-        `Ê-kíp: ${item.crew.join(' - ')}`
+        `Thực hiện: ${item.crew.join(' – ')}`
       );
       const locationParam = encodeURIComponent(item.location || '');
 
       return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titleParam}&dates=${datesParam}&details=${detailsParam}&location=${locationParam}`;
     }
 
-    function copyFormattedZalo() {
-      const isFiltered = selectedReporter !== 'ALL';
-      const items = isFiltered
-        ? parsedState.items.filter(i => i.crew.includes(selectedReporter))
-        : parsedState.items;
-
-      const newsItems = items.filter(i => i.category.group === 'NEWS');
-      const featureItems = items.filter(i => i.category.group === 'FEATURE');
-
-      let lines = [];
-      lines.push(`📅 *${parsedState.title}*` + (isFiltered ? ` (Cá nhân: ${selectedReporter})` : ''));
-      lines.push('');
-
-      if (newsItems.length > 0 && scheduleTypeFilter !== 'FEATURE') {
-        lines.push(`🔴 *I. LỊCH THỜI SỰ, HỌP, TIN & SỰ KIỆN (${newsItems.length})*`);
-        newsItems.forEach(it => {
-          const locStr = it.location ? ` (${it.location})` : '';
-          const depStr = it.departureNote ? ` [${it.departureNote}]` : '';
-          const crewStr = it.crew.length > 0 ? ` ➔ *${it.crew.join(' – ')}*` : '';
-          lines.push(`• *${it.displayTime}*${depStr}: ${it.content}${locStr}${crewStr}`);
-        });
-        lines.push('');
-      }
-
-      if (featureItems.length > 0 && scheduleTypeFilter !== 'NEWS') {
-        lines.push(`🟢 *II. LỊCH SẢN XUẤT (CHUYÊN TRANG, CHUYÊN MỤC) (${featureItems.length})*`);
-        featureItems.forEach(it => {
-          const locStr = it.location ? ` (${it.location})` : '';
-          const depStr = it.departureNote ? ` [${it.departureNote}]` : '';
-          const crewStr = it.crew.length > 0 ? ` ➔ *${it.crew.join(' – ')}*` : '';
-          lines.push(`• *${it.displayTime}*${depStr}: ${it.content}${locStr}${crewStr}`);
-        });
-        lines.push('');
-      }
-
-      if (parsedState.dutyItem && scheduleTypeFilter !== 'FEATURE' && (!isFiltered || parsedState.dutyItem.crew.includes(selectedReporter))) {
-        lines.push(`🎙️ *TRỰC TTTS:* *${parsedState.dutyItem.crew.join(' – ')}*`);
-      }
-
-      copyTextToClipboard(lines.join('\n').trim(), 'Đã copy văn bản 2 lịch gọn đẹp để dán vào Zalo!');
-    }
-
-    function copyTextToClipboard(text, successMsg) {
-      const tempTextArea = document.createElement('textarea');
-      tempTextArea.value = text;
-      tempTextArea.style.position = 'fixed';
-      tempTextArea.style.left = '-9999px';
-      document.body.appendChild(tempTextArea);
-      tempTextArea.select();
-
-      try {
-        document.execCommand('copy');
-        showToast(successMsg, 'success');
-      } catch (err) {
-        showToast('Không thể tự động copy, vui lòng thử lại.', 'error');
-      } finally {
-        document.body.removeChild(tempTextArea);
-      }
-    }
-
-    // =========================================================================
-    // XUẤT ẢNH PNG CHẤT LƯỢNG CAO VỪA KHUNG ĐIỆN THOẠI
-    // =========================================================================
-    async function exportScheduleImage() {
-      const btn = document.getElementById('btn-export-img');
-      const captureEl = document.getElementById('capture-area');
-      const originalBtnHtml = btn.innerHTML;
-
-      try {
-        btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Đang tạo ảnh...</span>`;
-
-        // Bật chế độ xuất ảnh để ẩn các nút thao tác thừa
-        captureEl.classList.add('exporting-mode');
-
-        // Đợi 1 nhịp render nhỏ
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const canvas = await html2canvas(captureEl, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false
-        });
-
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        const safeSuffix = selectedReporter === 'ALL' ? 'Toan-Phong' : selectedReporter.replace(/\s+/g, '-');
-        link.download = `Lich-Cong-Tac-Thoi-Su-${safeSuffix}.png`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showToast('Đã tải xuống ảnh lịch PNG vừa khung điện thoại!', 'success');
-      } catch (error) {
-        console.error('Lỗi xuất ảnh:', error);
-        showToast('Có lỗi khi tạo ảnh PNG. Vui lòng thử lại.', 'error');
-      } finally {
-        captureEl.classList.remove('exporting-mode');
-        btn.disabled = false;
-        btn.innerHTML = originalBtnHtml;
-      }
-    }
-
-    // =========================================================================
-    // HỆ THỐNG THÔNG BÁO TOAST
-    // =========================================================================
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
 
       const styles = {
-        success: 'bg-slate-900 text-white border-l-4 border-emerald-500',
-        error: 'bg-slate-900 text-white border-l-4 border-red-500',
-        info: 'bg-slate-900 text-white border-l-4 border-blue-500'
+        success: 'bg-blue-900 text-white border-l-4 border-emerald-400',
+        error: 'bg-rose-900 text-white border-l-4 border-rose-400',
+        info: 'bg-blue-900 text-white border-l-4 border-sky-400'
       };
 
       const icons = {
         success: 'fa-circle-check text-emerald-400',
-        error: 'fa-circle-exclamation text-red-400',
-        info: 'fa-circle-info text-blue-400'
+        error: 'fa-circle-exclamation text-rose-300',
+        info: 'fa-circle-info text-sky-300'
       };
 
       toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${styles[type] || styles.info}`;
@@ -1551,18 +1668,16 @@
 
       container.appendChild(toast);
 
-      // Hiệu ứng xuất hiện
       requestAnimationFrame(() => {
         toast.classList.remove('translate-y-2', 'opacity-0');
       });
 
-      // Tự động ẩn sau 3.2 giây
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => {
           if (toast.parentNode) toast.parentNode.removeChild(toast);
         }, 300);
-      }, 3200);
+      }, 3000);
     }
   </script>
 </body>
